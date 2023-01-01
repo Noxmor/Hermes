@@ -1,9 +1,11 @@
 #include "core/core.h"
 
 #include "core/application.h"
+#include "platform/platform.h"
 
 int main(void)
 {
+	platform_init();
 	if (!logger_init())
 		return 1;
 
@@ -14,4 +16,5 @@ int main(void)
 	application_run(app);
 
 	logger_shutdown();
+	platform_shutdown();
 }
