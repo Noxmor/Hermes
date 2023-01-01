@@ -1,5 +1,7 @@
 #include "core/core.h"
 
+#include "core/application.h"
+
 int main(void)
 {
 	if (!logger_init())
