@@ -5,6 +5,7 @@
 #include "core/core.h"
 #include "platform.h"
 
+#include <stdio.h>
 #include <windows.h>
 
 typedef struct Platform
@@ -27,27 +28,60 @@ void platform_set_title(const char* title)
 	SetConsoleTitle(title);
 }
 
-void platform_set_text_color(Color color)
+void platform_set_draw_color(Color color)
 {
 	HM_ASSERT(platform.console != NULL); 
 	
+	if (color == HM_COLOR_LAST)
+		return;
+
 	WORD windows_color = 0;
 
-	if (color & HM_COLOR_RED)
+	if (color & HM_COLOR_FOREGROUND_RED)
 		windows_color |= FOREGROUND_RED;
 
-	if (color & HM_COLOR_GREEN)
+	if (color & HM_COLOR_FOREGROUND_GREEN)
 		windows_color |= FOREGROUND_GREEN;
 
-	if (color & HM_COLOR_BLUE)
+	if (color & HM_COLOR_FOREGROUND_BLUE)
 		windows_color |= FOREGROUND_BLUE;
+
+	if (color & HM_COLOR_FOREGROUND_INTENSITY)
+		windows_color |= FOREGROUND_INTENSITY;
+
+	if (color & HM_COLOR_BACKGROUND_RED)
+		windows_color |= BACKGROUND_RED;
+
+	if (color & HM_COLOR_BACKGROUND_GREEN)
+		windows_color |= BACKGROUND_GREEN;
+
+	if (color & HM_COLOR_BACKGROUND_BLUE)
+		windows_color |= BACKGROUND_BLUE;
+
+	if (color & HM_COLOR_BACKGROUND_INTENSITY)
+		windows_color |= BACKGROUND_INTENSITY;
 
 	SetConsoleTextAttribute(platform.console, windows_color);
 }
 
-void platform_shutdown(void)
+void platform_draw_text(const char* text, Color color)
 {
-	platform_set_text_color(HM_COLOR_RED | HM_COLOR_GREEN | HM_COLOR_BLUE);
+	HM_ASSERT(platform.console != NULL);
+
+	platform_set_draw_color(color);
+
+	printf(text);
+}
+
+void platform_set_cursor_pos(u64 x, u64 y)
+{
+	HM_ASSERT(platform.console != NULL);
+	
+	COORD coord;
+	coord.X = x;
+	coord.Y = y;
+
+	SetConsoleCursorPosition(platform.console, coord);
 }
 
 void platform_clear_screen(void)
@@ -59,6 +93,16 @@ void platform_clear_screen(void)
 	GetConsoleScreenBufferInfo(platform.console, &csbi);
 	DWORD chars_written = 0;
 	FillConsoleOutputCharacter(platform.console, ' ', csbi.dwSize.X * csbi.dwSize.Y, startCoords, &chars_written);
+	DWORD attr_written = 0;
+	FillConsoleOutputAttribute(platform.console, HM_COLOR_FOREGROUND_RED | HM_COLOR_FOREGROUND_GREEN | HM_COLOR_FOREGROUND_BLUE, csbi.dwSize.X * csbi.dwSize.Y, startCoords, &attr_written);
+
+	platform_set_cursor_pos(0, 0);
+}
+
+void platform_shutdown(void)
+{
+	platform_set_draw_color(HM_COLOR_FOREGROUND_RED | HM_COLOR_FOREGROUND_GREEN | HM_COLOR_FOREGROUND_BLUE);
+	platform_clear_screen();
 }
 
 #endif
