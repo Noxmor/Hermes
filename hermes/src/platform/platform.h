@@ -11,12 +11,14 @@ typedef enum Color
 	HM_COLOR_INTENSITY = BIT(3)
 } Color;
 
-void platform_init();
+void platform_init(void);
 
 void platform_set_title(const char* title);
 
 void platform_set_text_color(Color color);
 
-void platform_shutdown();
+void platform_clear_screen(void);
+
+void platform_shutdown(void);
 
 #endif
