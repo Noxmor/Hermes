@@ -19,6 +19,9 @@ void platform_init(void)
 {
 	HM_ASSERT(platform.console == NULL);
 	platform.console = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	platform_set_draw_color(HM_COLOR_FOREGROUND_RED | HM_COLOR_FOREGROUND_GREEN | HM_COLOR_FOREGROUND_BLUE);
+	platform_clear_screen();
 }
 
 void platform_set_title(const char* title)
