@@ -24,11 +24,11 @@ void platform_init(void);
 
 void platform_set_title(const char* title);
 
-void platform_set_draw_color(Color color);
-
-void platform_draw_text(const char* text, Color color);
+void platform_draw_text(u64 x, u64 y, const char* text, Color color);
 
 void platform_set_cursor_pos(u64 x, u64 y);
+
+void platform_flush(void);
 
 void platform_clear_screen(void);
 
