@@ -16,7 +16,7 @@ typedef struct Logger
 
 static Logger logger;
 
-b8 logger_init()
+b8 logger_init(void)
 {
 	logger.log = fopen("Hermes.log", "wb");
 
@@ -46,17 +46,6 @@ void logger_log(LogLevel level, const char* message, ...)
 
 	static const char* level_str[5] = { "FATAL", "ERROR", "WARN", "INFO", "TRACE" };
 
-	if (level > HM_LOG_LEVEL_INFO && logger.error_log != NULL)
-	{
-		fprintf(logger.error_log, "[%02d:%02d:%02d] (%s): %s\n", time_info->tm_hour, time_info->tm_min, time_info->tm_sec, level_str[level], formatted_message);
-
-		if (ferror(logger.error_log))
-		{
-			fclose(logger.error_log);
-			logger.error_log = NULL;
-		}
-	}
-
 	if (logger.log != NULL)
 	{
 		fprintf(logger.log, "[%02d:%02d:%02d] (%s): %s\n", time_info->tm_hour, time_info->tm_min, time_info->tm_sec, level_str[level], formatted_message);
@@ -68,10 +57,26 @@ void logger_log(LogLevel level, const char* message, ...)
 		}
 	}
 
+	if (level < HM_LOG_LEVEL_INFO && logger.error_log != NULL)
+	{
+		fprintf(logger.error_log, "[%02d:%02d:%02d] (%s): %s\n", time_info->tm_hour, time_info->tm_min, time_info->tm_sec, level_str[level], formatted_message);
+
+		if (ferror(logger.error_log))
+		{
+			fclose(logger.error_log);
+			logger.error_log = NULL;
+		}
+		else
+		{
+			fflush(logger.log);
+			fflush(logger.error_log);
+		}
+	}
+
 	free(formatted_message);
 }
 
-void logger_shutdown()
+void logger_shutdown(void)
 {
 	if (logger.log != NULL)
 		fclose(logger.log);

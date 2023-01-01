@@ -12,11 +12,11 @@ typedef enum LogLevel
 	HM_LOG_LEVEL_TRACE
 } LogLevel;
 
-b8 logger_init();
+b8 logger_init(void);
 
 void logger_log(LogLevel level, const char* message, ...);
 
-void logger_shutdown();
+void logger_shutdown(void);
 
 #define HM_FATAL(...) logger_log(HM_LOG_LEVEL_FATAL, __VA_ARGS__)
 #define HM_ERROR(...) logger_log(HM_LOG_LEVEL_ERROR, __VA_ARGS__)
