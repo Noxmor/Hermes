@@ -17,9 +17,16 @@ void application_run(Application* app)
 	{
 
 	}
+
+	application_shutdown(app);
 }
 
 void application_close(Application* app)
 {
 	app->running = HM_FALSE;
+}
+
+void application_shutdown(Application* app)
+{
+	free(app);
 }
