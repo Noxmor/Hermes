@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+void application_shutdown(Application* app);
+
 Application* application_create(const char* title)
 {
 	Application* app = malloc(sizeof(Application));
@@ -15,7 +17,7 @@ void application_run(Application* app)
 
 	while (app->running)
 	{
-
+		application_close(app);
 	}
 
 	application_shutdown(app);
