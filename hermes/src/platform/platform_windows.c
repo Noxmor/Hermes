@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <windows.h>
+#include <conio.h>
 
 typedef struct Platform
 {
@@ -36,11 +37,40 @@ void platform_init(void)
 	platform_flush();
 }
 
+void platform_create_dir(const char* path)
+{
+	CreateDirectoryA(path, NULL);
+}
+
 void platform_set_title(const char* title)
 {
 	HM_ASSERT(platform.console != NULL); 
 	
 	SetConsoleTitle(title);
+}
+
+u64 platform_get_next_key(void)
+{
+	i32 key_code = getch();
+	
+	if (key_code == 0 || key_code == 0xE0)
+		key_code = getch();
+
+	switch (key_code)
+	{
+		case 27: return HM_KEY_ESCAPE;
+		case 72: return HM_KEY_ARROW_UP;
+		case 80: return HM_KEY_ARROW_DOWN;
+		case 75: return HM_KEY_ARROW_LEFT;
+		case 77: return HM_KEY_ARROW_RIGHT;
+		case 32: return HM_KEY_SPACE;
+		case 8: return HM_KEY_BACKSPACE;
+		case 13: return HM_KEY_RETURN;
+	}
+
+	HM_WARN("Unknown key '%d' was pressed!", key_code);
+
+	return HM_KEY_UNKNOWN;
 }
 
 WORD hermes_to_windows_color(Color color)

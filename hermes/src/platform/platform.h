@@ -5,6 +5,19 @@
 
 #define BIT(x) (1 << x)
 
+typedef enum KeyCode
+{
+	HM_KEY_UNKNOWN = 0,
+	HM_KEY_ARROW_LEFT,
+	HM_KEY_ARROW_RIGHT,
+	HM_KEY_ARROW_UP,
+	HM_KEY_ARROW_DOWN,
+	HM_KEY_SPACE,
+	HM_KEY_RETURN,
+	HM_KEY_BACKSPACE,
+	HM_KEY_ESCAPE
+} KeyCode;
+
 typedef enum Color
 {
 	HM_COLOR_LAST = 0,
@@ -22,7 +35,11 @@ typedef enum Color
 
 void platform_init(void);
 
+void platform_create_dir(const char* path);
+
 void platform_set_title(const char* title);
+
+u64 platform_get_next_key(void);
 
 void platform_draw_text(u64 x, u64 y, const char* text, Color color);
 
