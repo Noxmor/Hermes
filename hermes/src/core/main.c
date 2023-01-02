@@ -21,7 +21,7 @@ int main(void)
 	HM_INFO("Shut down application!");
 
 	platform_shutdown();
-	HM_INFO("Shut down platform");
+	HM_INFO("Shut down platform!");
 
 	HM_INFO("Shutting down log...");
 	logger_shutdown();
