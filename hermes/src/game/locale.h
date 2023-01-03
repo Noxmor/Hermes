@@ -27,6 +27,8 @@ const char* locale_handler_get(LocaleHandler* locale_handler, const char* key);
 
 b8 locale_handler_load_languages(LocaleHandler* locale_handler, const char* current_language_key);
 
+b8 locale_handler_load_locales(LocaleHandler* locale_handler, const char* current_language_key);
+
 void locale_handler_shutdown(LocaleHandler* locale_handler);
 
 #endif
