@@ -82,5 +82,13 @@ void logger_shutdown(void)
 		fclose(logger.log);
 
 	if (logger.error_log != NULL)
+	{
+		fseek(logger.error_log, 0, SEEK_END);
+		const u8 empty = ftell(logger.error_log) == 0;
+
 		fclose(logger.error_log);
+
+		if (empty)
+			remove("error.log");
+	}
 }
