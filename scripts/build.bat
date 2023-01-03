@@ -21,6 +21,8 @@ echo Building %assembly%...
 PUSHD bin-int
 gcc %FILES% %FLAGS% -c %INCLUDES% %DEFINES%
 
+if %ERRORLEVEL% NEQ 0 (exit /b)
+
 SET OBJ_FILES= 
 for /R %%f in (*.o) do (
 	SET OBJ_FILES=!OBJ_FILES! %%f
