@@ -25,6 +25,8 @@ void platform_init(void)
 	HM_ASSERT(platform.console == NULL);
 	platform.console = GetStdHandle(STD_OUTPUT_HANDLE);
 
+	SetConsoleOutputCP(CP_UTF8);
+
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(platform.console, &csbi);
 
@@ -149,8 +151,9 @@ void platform_flush(void)
 		for (u64 x = 0; x < platform.screen_width; ++x)
 		{
 			const COORD pos = { x, y };
+
 			FillConsoleOutputCharacter(platform.console, platform.next_screen[y * platform.screen_width + x], 1, pos, &chars_written);
-			FillConsoleOutputAttribute(platform.console, (platform.next_screen[y * platform.screen_width + x]) >> 8, 1, pos, &attr_written);
+			FillConsoleOutputAttribute(platform.console, platform.next_screen[y * platform.screen_width + x] >> 8, 1, pos, &attr_written);
 		}
 	}
 }
