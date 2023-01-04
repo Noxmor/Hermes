@@ -15,7 +15,6 @@ typedef struct Platform
 	u64 screen_width;
 	u64 screen_height;
 	DWORD* next_screen;
-	WORD last_color;
 } Platform;
 
 static Platform platform;
@@ -26,6 +25,7 @@ void platform_init(void)
 	platform.console = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	SetConsoleOutputCP(CP_UTF8);
+	SetConsoleCP(CP_UTF8);
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(platform.console, &csbi);
@@ -75,57 +75,56 @@ u64 platform_get_next_key(void)
 	return HM_KEY_UNKNOWN;
 }
 
-WORD hermes_to_windows_color(Color color)
+WORD hermes_color_code_to_windows_color(char color_code)
 {
-	HM_ASSERT(platform.console != NULL); 
-	
-	if (color == HM_COLOR_LAST)
-		return platform.last_color;
+	switch (color_code)
+	{
+		case '0': return 0;
+		case '1': return FOREGROUND_BLUE;
+		case '2': return FOREGROUND_GREEN;
+		case '3': return FOREGROUND_GREEN | FOREGROUND_BLUE;
+		case '4': return FOREGROUND_RED;
+		case '5': return FOREGROUND_RED | FOREGROUND_BLUE;
+		case '6': return FOREGROUND_RED | FOREGROUND_GREEN;
+		case '7': return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+		case '8': return 0 | FOREGROUND_INTENSITY;
+		case '9': return FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		case 'a': return FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+		case 'b': return FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		case 'c': return FOREGROUND_RED | FOREGROUND_INTENSITY;
+		case 'd': return FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		case 'e': return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+		case 'f': return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	}
 
-	WORD windows_color = 0;
-
-	if (color & HM_COLOR_FOREGROUND_RED)
-		windows_color |= FOREGROUND_RED;
-
-	if (color & HM_COLOR_FOREGROUND_GREEN)
-		windows_color |= FOREGROUND_GREEN;
-
-	if (color & HM_COLOR_FOREGROUND_BLUE)
-		windows_color |= FOREGROUND_BLUE;
-
-	if (color & HM_COLOR_FOREGROUND_INTENSITY)
-		windows_color |= FOREGROUND_INTENSITY;
-
-	if (color & HM_COLOR_BACKGROUND_RED)
-		windows_color |= BACKGROUND_RED;
-
-	if (color & HM_COLOR_BACKGROUND_GREEN)
-		windows_color |= BACKGROUND_GREEN;
-
-	if (color & HM_COLOR_BACKGROUND_BLUE)
-		windows_color |= BACKGROUND_BLUE;
-
-	if (color & HM_COLOR_BACKGROUND_INTENSITY)
-		windows_color |= BACKGROUND_INTENSITY;
-
-	return windows_color;
+	return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 }
 
-void platform_draw_text(u64 x, u64 y, const char* text, Color color)
+void platform_draw_text(u64 x, u64 y, const char* text)
 {
 	HM_ASSERT(platform.console != NULL);
 
-	WORD windows_color = hermes_to_windows_color(color);
+	WORD color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 
-	const u64 start_index = y * platform.screen_width + x;
+	u64 start_index = y * platform.screen_width + x;
 
 	for (u64 i = 0; i < strlen(text); ++i)
 	{
-		DWORD element = text[i] | (windows_color << 8);
-		platform.next_screen[start_index + i] = element;
-	}
+		const char c = text[i];
 
-	platform.last_color = windows_color;
+		if (c == '§')
+		{
+			color = hermes_color_code_to_windows_color(text[++i]);
+
+			if (text[i] != '7' && color == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE))
+				HM_WARN("[Platform]: Unknown color code '%c' in text \"%s\"!", text[i], text);
+
+			continue;
+		}
+
+		const DWORD element = text[i] | (color << 8);
+		platform.next_screen[start_index++] = element;
+	}
 }
 
 void platform_set_cursor_pos(u64 x, u64 y)
