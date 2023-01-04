@@ -36,7 +36,7 @@ void logger_log(LogLevel level, const char* message, ...)
 	__builtin_va_list args = 0;
 	va_start(args, message);
 
-	u64 len = vsnprintf(NULL, 0, message, args);
+	const u64 len = vsnprintf(NULL, 0, message, args);
 	char* formatted_message = memory_system_malloc(len + 1, HM_MEMORY_GROUP_STRING);
 	vsprintf(formatted_message, message, args);
 	va_end(args);
