@@ -3,9 +3,9 @@
 #ifdef HM_PLATFORM_WINDOWS
 
 #include "core/core.h"
+#include "core/memory_system.h"
 #include "platform.h"
 
-#include <stdio.h>
 #include <windows.h>
 #include <conio.h>
 
@@ -33,7 +33,7 @@ void platform_init(void)
 	platform.screen_width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
 	platform.screen_height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 
-	platform.next_screen = malloc(platform.screen_width * platform.screen_height * sizeof(DWORD));
+	platform.next_screen = memory_system_malloc(platform.screen_width * platform.screen_height * sizeof(DWORD), HM_MEMORY_GROUP_UNKNOWN);
 
 	platform_clear_screen();
 	platform_flush();
@@ -174,7 +174,7 @@ void platform_shutdown(void)
 
 	platform_set_cursor_pos(0, 0);
 
-	free(platform.next_screen);
+	memory_system_free(platform.next_screen, platform.screen_width * platform.screen_height * sizeof(DWORD), HM_MEMORY_GROUP_UNKNOWN);
 }
 
 #endif
