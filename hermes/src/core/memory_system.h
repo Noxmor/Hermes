@@ -6,6 +6,7 @@
 typedef enum MemoryGroup
 {
 	HM_MEMORY_GROUP_UNKNOWN = 0,
+	HM_MEMORY_GROUP_STRING,
 
 	HM_MEMORY_GROUP_SIZE
 } MemoryGroup;

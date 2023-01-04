@@ -88,4 +88,5 @@ void memory_system_log(void)
 {
 	HM_INFO("[MemorySystem]: Total allocated: %zu", memory_system.total_allocated);
 	HM_INFO("[MemorySystem]: MemoryGroup \"Unknown\": %zu", memory_system.groups_allocated[HM_MEMORY_GROUP_UNKNOWN]);
+	HM_INFO("[MemorySystem]: MemoryGroup \"String\": %zu", memory_system.groups_allocated[HM_MEMORY_GROUP_STRING]);
 }
