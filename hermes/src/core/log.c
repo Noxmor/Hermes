@@ -1,12 +1,12 @@
 #include "log.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <stdarg.h>
 
 #include "core/core.h"
+#include "core/memory_system.h"
 
 typedef struct Logger
 {
@@ -37,7 +37,7 @@ void logger_log(LogLevel level, const char* message, ...)
 	va_start(args, message);
 
 	u64 len = vsnprintf(NULL, 0, message, args);
-	char* formatted_message = malloc(len + 1);
+	char* formatted_message = memory_system_malloc(len + 1, HM_MEMORY_GROUP_STRING);
 	vsprintf(formatted_message, message, args);
 	va_end(args);
 
@@ -73,7 +73,7 @@ void logger_log(LogLevel level, const char* message, ...)
 		}
 	}
 
-	free(formatted_message);
+	memory_system_free(formatted_message, len + 1, HM_MEMORY_GROUP_STRING);
 }
 
 void logger_shutdown(void)
