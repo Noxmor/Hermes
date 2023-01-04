@@ -1,18 +1,19 @@
 #include "locale.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "core/memory_system.h"
 
 void locale_shutdown(Locale* locale)
 {
 	if (locale->key != NULL)
 	{
-		free(locale->key);
-		free(locale->value);
+		memory_system_free(locale->key, (strlen(locale->key) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+		memory_system_free(locale->value, (strlen(locale->value) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 	}
 
-	free(locale);
+	memory_system_free(locale, sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
 }
 
 // Source: https://github.com/aappleby/smhasher/blob/master/src/Hashes.cpp
@@ -32,9 +33,9 @@ u32 hash(const char* str)
 
 LocaleHandler* locale_handler_create(u32 size)
 {
-	LocaleHandler* locale_handler = malloc(sizeof(LocaleHandler));
+	LocaleHandler* locale_handler = memory_system_malloc(sizeof(LocaleHandler), HM_MEMORY_GROUP_UNKNOWN);
 	locale_handler->size = size;
-	locale_handler->locales = calloc(size, sizeof(Locale));
+	locale_handler->locales = memory_system_calloc(size, sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
 	return locale_handler;
 }
 
@@ -56,9 +57,9 @@ void locale_handler_insert(LocaleHandler* locale_handler, const char* key, const
 
 	if (locale_handler->locales[index].key == NULL)
 	{
-		locale_handler->locales[index].key = calloc(strlen(key) + 1, sizeof(char));
+		locale_handler->locales[index].key = memory_system_calloc(strlen(key) + 1, sizeof(char), HM_MEMORY_GROUP_STRING);
 		strcpy(locale_handler->locales[index].key, key);
-		locale_handler->locales[index].value = calloc(strlen(value) + 1, sizeof(char));
+		locale_handler->locales[index].value = memory_system_calloc(strlen(value) + 1, sizeof(char), HM_MEMORY_GROUP_STRING);
 		strcpy(locale_handler->locales[index].value, value);
 	}
 	else
@@ -78,7 +79,7 @@ const char* locale_handler_get(LocaleHandler* locale_handler, const char* key)
 	if (locale_handler->locales[index].key == NULL)
 	{
 		HM_WARN("[LocaleHandler]: Called locale_handler_get(), but locale with specified key does not exist! Key was: \"%s\"", key);
-		return "HM_KEY_INVALID";
+		return key;
 	}
 
 	if (strcmp(key, locale_handler->locales[index].key) != 0)
@@ -87,13 +88,13 @@ const char* locale_handler_get(LocaleHandler* locale_handler, const char* key)
 	return locale_handler->locales[index].value;
 }
 
-b8 load_language_definitions(LocaleHandler* locale_handler)
+b8 load_language_definitions(LocaleHandler* locale_handler, const char* path)
 {
-	FILE* f = fopen("locale/languages.txt", "r");
+	FILE* f = fopen(path, "r");
 
 	if (f == NULL)
 	{
-		HM_ERROR("[LocaleHandler]: Could not open file \"locale/languages.txt\"!");
+		HM_ERROR("[LocaleHandler]: Could not open file \"%s\"!", path);
 		return HM_FALSE;
 	}
 
@@ -111,30 +112,43 @@ b8 load_language_definitions(LocaleHandler* locale_handler)
 
 			buffer[strlen(buffer) - 1 - 1] = '\0';
 
-			locale_handler->languages = realloc(locale_handler->languages, locale_handler->language_count * sizeof(Locale*));
-			locale_handler->languages[locale_handler->language_count - 1] = malloc(sizeof(Locale));
+			locale_handler->languages = memory_system_realloc(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), (locale_handler->language_count - 1) * sizeof(Locale*), HM_MEMORY_GROUP_UNKNOWN);
+			locale_handler->languages[locale_handler->language_count - 1] = memory_system_malloc(sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
 			Locale* locale = locale_handler->languages[locale_handler->language_count - 1];
-			locale->key = malloc((strlen(buffer) + 1) * sizeof(char));
+			locale->key = memory_system_malloc((strlen(buffer) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 			strcpy(locale->key, buffer);
 		}
 	}
+
 	fclose(f);
 
 	return HM_TRUE;
 }
 
-b8 locale_handler_load_languages(LocaleHandler* locale_handler, const char* current_language_key)
+b8 locale_handler_load_languages(LocaleHandler* locale_handler, const char* game_dir, const char* current_language_key)
 {
-	if (!load_language_definitions(locale_handler))
-		return HM_FALSE;
+	char* path = memory_system_calloc(strlen(game_dir) + strlen("/locale/languages.txt") + 1, sizeof(char), HM_MEMORY_GROUP_STRING);
+	sprintf(path, "%s/locale/languages.txt", game_dir);
 
-	FILE* f = fopen("locale/languages.txt", "r");
+	if (!load_language_definitions(locale_handler, path))
+	{
+		memory_system_free(path, (strlen(game_dir) + strlen("/locale/languages.txt") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+		
+		return HM_FALSE;
+	}
+
+	FILE* f = fopen(path, "r");
 
 	if (f == NULL)
 	{
-		HM_ERROR("[LocaleHandler]: Could not open file \"locale/languages.txt\"!");
+		HM_ERROR("[LocaleHandler]: Could not open file \"%s\"!", path);
+
+		memory_system_free(path, (strlen(game_dir) + strlen("/locale/languages.txt") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+
 		return HM_FALSE;
 	}
+
+	memory_system_free(path, (strlen(game_dir) + strlen("/locale/languages.txt") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 
 	u8 language_index = 0;
 	u64 line_number = 0;
@@ -204,7 +218,7 @@ b8 locale_handler_load_languages(LocaleHandler* locale_handler, const char* curr
 				return HM_FALSE;
 			}
 
-			locale_handler->languages[language_index]->value = calloc(strlen(buffer + splitter_index + 1) + 1, sizeof(char));
+			locale_handler->languages[language_index]->value = memory_system_calloc(strlen(buffer + splitter_index + 1) + 1, sizeof(char), HM_MEMORY_GROUP_STRING);
 			memcpy(locale_handler->languages[language_index]->value, buffer + splitter_index + 1, strlen(buffer + splitter_index + 1));
 
 			HM_TRACE("[LocaleHandler]: Loaded language: Key: \"%s\", Value: \"%s\"", locale_handler->languages[language_index]->key, locale_handler->languages[language_index]->value);
@@ -255,7 +269,7 @@ b8 load_locale(LocaleHandler* locale_handler, const char* path)
 		if (strlen(buffer) == 0)
 			continue;
 
-		if (buffer[0] == '\n')
+		if (buffer[0] == '\n' || buffer[0] == '\r')
 			continue;
 
 		if (buffer[strlen(buffer) - 1] == '\n')
@@ -287,15 +301,19 @@ b8 load_locale(LocaleHandler* locale_handler, const char* path)
 	return HM_TRUE;
 }
 
-b8 locale_handler_load_locales(LocaleHandler* locale_handler, const char* current_language_key)
+b8 locale_handler_load_locales(LocaleHandler* locale_handler, const char* game_dir, const char* current_language_key)
 {
 	char path[256];
 
-	sprintf(path, "locale/%s/commands.txt", current_language_key);
+	sprintf(path, "%s/locale/%s/commands.txt", game_dir, current_language_key);
 	if (!load_locale(locale_handler, path))
 		return HM_FALSE;
 
-	sprintf(path, "locale/%s/interfaces.txt", current_language_key);
+	sprintf(path, "%s/locale/%s/interfaces.txt", game_dir, current_language_key);
+	if (!load_locale(locale_handler, path))
+		return HM_FALSE;
+
+	sprintf(path, "%s/locale/%s/controls.txt", game_dir, current_language_key);
 	if (!load_locale(locale_handler, path))
 		return HM_FALSE;
 
@@ -310,17 +328,17 @@ void locale_handler_shutdown(LocaleHandler* locale_handler)
 
 		if (locale->key != NULL)
 		{
-			free(locale->key);
-			free(locale->value);
+			memory_system_free(locale->key, (strlen(locale->key) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+			memory_system_free(locale->value, (strlen(locale->value) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 		}
 	}
 	
-	free(locale_handler->locales);
+	memory_system_free(locale_handler->locales, locale_handler->size * sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
 	
 	for (u8 i = 0; i < locale_handler->language_count; ++i)
 		locale_shutdown(locale_handler->languages[i]);
 	
-	free(locale_handler->languages);
+	memory_system_free(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), HM_MEMORY_GROUP_UNKNOWN);
 	
-	free(locale_handler);
+	memory_system_free(locale_handler, sizeof(LocaleHandler), HM_MEMORY_GROUP_UNKNOWN);
 }
