@@ -15,7 +15,7 @@ void memory_system_alloc(u64 size, MemoryGroup group)
 	HM_ASSERT(group < HM_MEMORY_GROUP_SIZE);
 	
 	if (group == HM_MEMORY_GROUP_UNKNOWN)
-		HM_WARN("[MemorySystem]: Allocated memory with HM_MEMORY_GROUP_UNKNOWN!");
+		HM_WARN("[MemorySystem]: Allocated memory with group HM_MEMORY_GROUP_UNKNOWN!");
 
 	memory_system.total_allocated += size;
 	memory_system.groups_allocated[group] += size;
@@ -26,9 +26,10 @@ void memory_system_dealloc(u64 size, MemoryGroup group)
 	HM_ASSERT(group < HM_MEMORY_GROUP_SIZE); 
 	
 	if (group == HM_MEMORY_GROUP_UNKNOWN)
-		HM_WARN("[MemorySystem]: Freed memory with HM_MEMORY_GROUP_UNKNOWN!");
+		HM_WARN("[MemorySystem]: Freed memory with group HM_MEMORY_GROUP_UNKNOWN!");
 
 	HM_ASSERT(memory_system.total_allocated >= size);
+
 	HM_ASSERT(memory_system.groups_allocated[group] >= size);
 
 	memory_system.total_allocated -= size;
@@ -44,7 +45,7 @@ void* memory_system_malloc(u64 size, MemoryGroup group)
 
 void* memory_system_calloc(u64 count, u64 size, MemoryGroup group)
 {
-	memory_system_alloc(size, group);
+	memory_system_alloc(count * size, group);
 
 	return calloc(count, size);
 }
@@ -58,13 +59,6 @@ void* memory_system_realloc(void* ptr, u64 new_size, u64 current_size, MemoryGro
 		return realloc(ptr, new_size);
 	}
 
-	if (new_size == current_size)
-	{
-		HM_WARN("[MemorySystem]: Ignored reallocation: new_size and current_size were equal!");
-
-		return ptr;
-	}
-
 	if (new_size > current_size)
 	{
 		memory_system_alloc(new_size - current_size, group);
@@ -72,9 +66,16 @@ void* memory_system_realloc(void* ptr, u64 new_size, u64 current_size, MemoryGro
 		return realloc(ptr, new_size);
 	}
 
-	memory_system_dealloc(current_size - new_size, group);
+	if (new_size < current_size)
+	{
+		memory_system_dealloc(current_size - new_size, group);
 
-	return realloc(ptr, new_size);
+		return realloc(ptr, new_size);
+	}
+
+	HM_WARN("[MemorySystem]: Ignored reallocation: new_size and current_size were equal!");
+
+	return ptr;
 }
 
 void memory_system_free(void* ptr, u64 size, MemoryGroup group)
