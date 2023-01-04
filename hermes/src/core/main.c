@@ -1,5 +1,6 @@
 #include "core/core.h"
 
+#include "core/memory_system.h"
 #include "core/application.h"
 #include "platform/platform.h"
 
@@ -22,6 +23,8 @@ int main(void)
 
 	platform_shutdown();
 	HM_INFO("Shut down platform!");
+
+	memory_system_log();
 
 	HM_INFO("Shutting down log...");
 	logger_shutdown();
