@@ -112,17 +112,20 @@ void platform_draw_text(u64 x, u64 y, const char* text)
 	{
 		const char c = text[i];
 
+		if (c < 0 && text[i + 1] < 0)
+			continue;
+
 		if (c == '§')
 		{
 			color = hermes_color_code_to_windows_color(text[++i]);
 
-			if (text[i] != '7' && color == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE))
+			if (text[i] != '7' && color == (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) && i < strlen(text))
 				HM_WARN("[Platform]: Unknown color code '%c' in text \"%s\"!", text[i], text);
 
 			continue;
 		}
 
-		const DWORD element = text[i] | (color << 8);
+		const DWORD element = (u8)c | (color << 16);
 		platform.next_screen[start_index++] = element;
 	}
 }
@@ -152,7 +155,7 @@ void platform_flush(void)
 			const COORD pos = { x, y };
 
 			FillConsoleOutputCharacter(platform.console, platform.next_screen[y * platform.screen_width + x], 1, pos, &chars_written);
-			FillConsoleOutputAttribute(platform.console, platform.next_screen[y * platform.screen_width + x] >> 8, 1, pos, &attr_written);
+			FillConsoleOutputAttribute(platform.console, platform.next_screen[y * platform.screen_width + x] >> 16, 1, pos, &attr_written);
 		}
 	}
 }
