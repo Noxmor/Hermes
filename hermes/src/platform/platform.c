@@ -36,8 +36,8 @@ KeyCode platform_str_to_keycode(const char* str)
 	if (strcmp(str, "HM_KEY_ARROW_UP") == 0)
 		return HM_KEY_ARROW_UP;
 
-	if (strcmp(str, "HM_KEY_DOWN") == 0)
-		return HM_KEY_DOWN;
+	if (strcmp(str, "HM_KEY_ARROW_DOWN") == 0)
+		return HM_KEY_ARROW_DOWN;
 
 	if (strcmp(str, "HM_KEY_SPACE") == 0)
 		return HM_KEY_SPACE;
