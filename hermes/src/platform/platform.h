@@ -18,6 +18,8 @@ typedef enum KeyCode
 	HM_KEY_ESCAPE
 } KeyCode;
 
+const char* platform_keycode_to_str(KeyCode keycode);
+
 void platform_init(void);
 
 void platform_create_dir(const char* path);
