@@ -64,7 +64,9 @@ void config_handler_load_config(ConfigHandler* config_handler)
 			continue;
 		}
 
-		buffer[strlen(buffer) - 1] = '\0';
+		if(buffer[strlen(buffer) - 1] == '\n')
+			buffer[strlen(buffer) - 1] = '\0';
+
 		buffer[splitter_index] = '\0';
 
 		if (strcmp(buffer, "LANGUAGE") == 0)
