@@ -20,6 +20,8 @@ typedef enum KeyCode
 
 const char* platform_keycode_to_str(KeyCode keycode);
 
+KeyCode platform_str_to_keycode(const char* str);
+
 void platform_init(void);
 
 void platform_create_dir(const char* path);
