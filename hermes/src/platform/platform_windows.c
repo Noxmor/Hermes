@@ -68,6 +68,32 @@ u64 platform_get_next_key(void)
 		case 32: return HM_KEY_SPACE;
 		case 8: return HM_KEY_BACKSPACE;
 		case 13: return HM_KEY_RETURN;
+		case 'a': return HM_KEY_A;
+		case 'b': return HM_KEY_B;
+		case 'c': return HM_KEY_C;
+		case 'd': return HM_KEY_D;
+		case 'e': return HM_KEY_E;
+		case 'f': return HM_KEY_F;
+		case 'g': return HM_KEY_G;
+		case 'h': return HM_KEY_H;
+		case 'i': return HM_KEY_I;
+		case 'j': return HM_KEY_J;
+		case 'k': return HM_KEY_K;
+		case 'l': return HM_KEY_L;
+		case 'm': return HM_KEY_M;
+		case 'n': return HM_KEY_N;
+		case 'o': return HM_KEY_O;
+		case 'p': return HM_KEY_P;
+		case 'q': return HM_KEY_Q;
+		case 'r': return HM_KEY_R;
+		case 's': return HM_KEY_S;
+		case 't': return HM_KEY_T;
+		case 'u': return HM_KEY_U;
+		case 'v': return HM_KEY_V;
+		case 'w': return HM_KEY_W;
+		case 'x': return HM_KEY_X;
+		case 'y': return HM_KEY_Y;
+		case 'z': return HM_KEY_Z;
 	}
 
 	HM_WARN("Unknown key '%d' was pressed!", key_code);
