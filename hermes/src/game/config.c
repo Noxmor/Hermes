@@ -1,10 +1,11 @@
 #include "config.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "core/memory_system.h"
+
+#include "platform/platform.h"
 
 ConfigHandler* config_handler_create(void)
 {
@@ -77,11 +78,20 @@ void config_handler_load_config(ConfigHandler* config_handler)
 			strcpy(config_handler->game_dir, buffer + splitter_index + 1);
 		}
 		else if (strcmp(buffer, "KEYBIND_CONFIRM") == 0)
-			config_handler->keybind_confirm = atoi(buffer + splitter_index + 1);
+		{
+			const KeyCode keycode = platform_str_to_keycode(buffer + splitter_index + 1);
+			config_handler->keybind_confirm = keycode == HM_KEY_UNKNOWN ? HM_KEY_RETURN : keycode;
+		}
 		else if (strcmp(buffer, "KEYBIND_MOVE_UP") == 0)
-			config_handler->keybind_move_up = atoi(buffer + splitter_index + 1);
+		{
+			const KeyCode keycode = platform_str_to_keycode(buffer + splitter_index + 1);
+			config_handler->keybind_move_up = keycode == HM_KEY_UNKNOWN ? HM_KEY_ARROW_UP : keycode;
+		}
 		else if (strcmp(buffer, "KEYBIND_MOVE_DOWN") == 0)
-			config_handler->keybind_move_down = atoi(buffer + splitter_index + 1);
+		{
+			const KeyCode keycode = platform_str_to_keycode(buffer + splitter_index + 1);
+			config_handler->keybind_move_down = keycode == HM_KEY_UNKNOWN ? HM_KEY_ARROW_DOWN : keycode;
+		}
 		else
 			HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg:%zu: Unknown key \"%s\" (Skipped line)", buffer, line_number);
 	}
@@ -111,21 +121,16 @@ void config_handler_save_config(ConfigHandler* config_handler)
 	fwrite(config_handler->game_dir, sizeof(char), strlen(config_handler->game_dir), f);
 	fwrite("\n", sizeof(char), 1, f);
 
-	char keybind_buffer[8];
-
 	fwrite("KEYBIND_CONFIRM=", sizeof(char), strlen("KEYBIND_CONFIRM="), f);
-	sprintf(keybind_buffer, "%d", config_handler->keybind_confirm);
-	fwrite(keybind_buffer, sizeof(char), strlen(keybind_buffer), f);
+	fwrite(platform_keycode_to_str(config_handler->keybind_confirm), sizeof(char), strlen(platform_keycode_to_str(config_handler->keybind_confirm)), f);
 	fwrite("\n", sizeof(char), 1, f);
 
 	fwrite("KEYBIND_MOVE_UP=", sizeof(char), strlen("KEYBIND_MOVE_UP="), f);
-	sprintf(keybind_buffer, "%d", config_handler->keybind_move_up); 
-	fwrite(keybind_buffer, sizeof(char), strlen(keybind_buffer), f);
+	fwrite(platform_keycode_to_str(config_handler->keybind_move_up), sizeof(char), strlen(platform_keycode_to_str(config_handler->keybind_move_up)), f);
 	fwrite("\n", sizeof(char), 1, f);
 
 	fwrite("KEYBIND_MOVE_DOWN=", sizeof(char), strlen("KEYBIND_MOVE_DOWN="), f);
-	sprintf(keybind_buffer, "%d", config_handler->keybind_move_down);
-	fwrite(keybind_buffer, sizeof(char), strlen(keybind_buffer), f);
+	fwrite(platform_keycode_to_str(config_handler->keybind_move_down), sizeof(char), strlen(platform_keycode_to_str(config_handler->keybind_move_down)), f);
 
 	fclose(f);
 }
