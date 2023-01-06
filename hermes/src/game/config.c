@@ -111,10 +111,6 @@ void config_handler_save_config(ConfigHandler* config_handler)
 		return;
 	}
 
-	HM_INFO("KEYBIND: %d", config_handler->keybind_confirm);
-	HM_INFO("KEYBIND: %d", config_handler->keybind_move_up);
-	HM_INFO("KEYBIND: %d", config_handler->keybind_move_down);
-
 	fwrite("LANGUAGE=", sizeof(char), strlen("LANGUAGE="), f);
 	fwrite(config_handler->language_key, sizeof(char), strlen(config_handler->language_key), f);
 	fwrite("\n", sizeof(char), 1, f);
