@@ -44,6 +44,36 @@ void platform_create_dir(const char* path)
 	CreateDirectoryA(path, NULL);
 }
 
+char** platform_get_files_in_dir(const char* dir_path, u64* file_count)
+{
+	char** files = NULL;
+	
+	u64 files_found = 0;
+
+	WIN32_FIND_DATA fd;
+	HANDLE find = FindFirstFile(dir_path, &fd);
+
+	if (find != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			{
+				++files_found;
+				files = memory_system_realloc(files, files_found * sizeof(char*), (files_found - 1) * sizeof(char*), HM_MEMORY_GROUP_STRING);
+				files[files_found - 1] = memory_system_malloc((strlen(fd.cFileName) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+				strcpy(files[files_found - 1], fd.cFileName);
+			}
+		} while (FindNextFile(find, &fd));
+		FindClose(find);
+	}
+
+	if (file_count != NULL)
+		*file_count = files_found;
+
+	return files;
+}
+
 void platform_set_title(const char* title)
 {
 	HM_ASSERT(platform.console != NULL); 
