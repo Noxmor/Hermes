@@ -3,8 +3,6 @@
 
 #include "core/core.h"
 
-#define BIT(x) (1 << x)
-
 typedef enum KeyCode
 {
 	HM_KEY_UNKNOWN = 0,
@@ -51,6 +49,8 @@ KeyCode platform_str_to_keycode(const char* str);
 void platform_init(void);
 
 void platform_create_dir(const char* path);
+
+char** platform_get_files_in_dir(const char* dir_path, u64* file_count);
 
 void platform_set_title(const char* title);
 

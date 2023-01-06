@@ -7,6 +7,8 @@
 #define HM_TRUE 1
 #define HM_FALSE 0
 
+#define BIT(x) (1 << x)
+
 #if defined(__clang__) || defined(__GNUC__)
 #define HM_STATIC_ASSERT(condition, message) _Static_assert(condition, message)
 #else
