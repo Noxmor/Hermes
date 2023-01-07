@@ -104,6 +104,9 @@ SerializableData* serializable_data_create_from_file(const char* path)
 		}
 		else if (whitespaces == indentation_level - 1)
 		{
+			if (parent->children_count == 0)
+				HM_WARN("[SerializableData]: Incorrect syntax in %s:%zu: Parent node \"%s\" has no children!", path, line_number, parent->key);
+			
 			--parent_node_count;
 			parent_nodes = memory_system_realloc(parent_nodes, parent_node_count * sizeof(SerializableData*), (parent_node_count + 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
 			parent = parent_nodes[parent_node_count - 1];
