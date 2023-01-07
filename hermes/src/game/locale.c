@@ -305,17 +305,15 @@ b8 locale_handler_load_locales(LocaleHandler* locale_handler, const char* game_d
 {
 	char path[256];
 
-	sprintf(path, "%s/locale/%s/commands.txt", game_dir, current_language_key);
-	if (!load_locale(locale_handler, path))
-		return HM_FALSE;
+#define FILES_TO_LOAD_COUNT 4
+	static const char* files_to_load[FILES_TO_LOAD_COUNT] = { "commands", "interfaces", "controls", "locations" };
 
-	sprintf(path, "%s/locale/%s/interfaces.txt", game_dir, current_language_key);
-	if (!load_locale(locale_handler, path))
-		return HM_FALSE;
-
-	sprintf(path, "%s/locale/%s/controls.txt", game_dir, current_language_key);
-	if (!load_locale(locale_handler, path))
-		return HM_FALSE;
+	for (u64 i = 0; i < FILES_TO_LOAD_COUNT; ++i)
+	{
+		sprintf(path, "%s/locale/%s/%s.txt", game_dir, current_language_key, files_to_load[i]);
+		if (!load_locale(locale_handler, path))
+			return HM_FALSE;
+	}
 
 	return HM_TRUE;
 }
