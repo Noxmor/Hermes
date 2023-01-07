@@ -9,7 +9,9 @@ typedef enum LogLevel
 	HM_LOG_LEVEL_ERROR,
 	HM_LOG_LEVEL_WARN,
 	HM_LOG_LEVEL_INFO,
-	HM_LOG_LEVEL_TRACE
+	HM_LOG_LEVEL_TRACE,
+
+	HM_LOG_LEVEL_SIZE
 } LogLevel;
 
 b8 logger_init(void);

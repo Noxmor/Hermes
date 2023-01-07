@@ -1,12 +1,12 @@
 #include "log.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <stdarg.h>
 
 #include "core/core.h"
-#include "core/memory_system.h"
 
 typedef struct Logger
 {
@@ -37,14 +37,14 @@ void logger_log(LogLevel level, const char* message, ...)
 	va_start(args, message);
 
 	const u64 len = vsnprintf(NULL, 0, message, args);
-	char* formatted_message = memory_system_malloc(len + 1, HM_MEMORY_GROUP_STRING);
+	char* formatted_message = malloc((len + 1) * sizeof(char));
 	vsprintf(formatted_message, message, args);
 	va_end(args);
 
 	time_t now = time(0);
 	struct tm* time_info = localtime(&now);
 
-	static const char* level_str[5] = { "FATAL", "ERROR", "WARN", "INFO", "TRACE" };
+	static const char* level_str[HM_LOG_LEVEL_SIZE] = { "FATAL", "ERROR", "WARN", "INFO", "TRACE" };
 
 	if (logger.log != NULL)
 	{
@@ -73,7 +73,7 @@ void logger_log(LogLevel level, const char* message, ...)
 		}
 	}
 
-	memory_system_free(formatted_message, len + 1, HM_MEMORY_GROUP_STRING);
+	free(formatted_message);
 }
 
 void logger_shutdown(void)
@@ -84,7 +84,7 @@ void logger_shutdown(void)
 	if (logger.error_log != NULL)
 	{
 		fseek(logger.error_log, 0, SEEK_END);
-		const u8 empty = ftell(logger.error_log) == 0;
+		const b8 empty = ftell(logger.error_log) == 0;
 
 		fclose(logger.error_log);
 
