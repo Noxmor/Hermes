@@ -6,6 +6,8 @@ typedef struct MemorySystem
 {
 	u64 total_allocated;
 	u64 groups_allocated[HM_MEMORY_GROUP_SIZE];
+	u64 total_allocations;
+	u64 total_deallocations;
 } MemorySystem;
 
 static MemorySystem memory_system;
@@ -14,6 +16,8 @@ void memory_system_alloc(u64 size, MemoryGroup group)
 {
 	HM_ASSERT(group < HM_MEMORY_GROUP_SIZE);
 	
+	HM_TRACE("[MemorySystem]: Allocated %zu bytes", size);
+
 	if (group == HM_MEMORY_GROUP_UNKNOWN)
 		HM_WARN("[MemorySystem]: Allocated memory with group HM_MEMORY_GROUP_UNKNOWN!");
 
@@ -24,13 +28,15 @@ void memory_system_alloc(u64 size, MemoryGroup group)
 void memory_system_dealloc(u64 size, MemoryGroup group)
 {
 	HM_ASSERT(group < HM_MEMORY_GROUP_SIZE); 
-	
-	if (group == HM_MEMORY_GROUP_UNKNOWN)
-		HM_WARN("[MemorySystem]: Freed memory with group HM_MEMORY_GROUP_UNKNOWN!");
 
 	HM_ASSERT(memory_system.total_allocated >= size);
 
 	HM_ASSERT(memory_system.groups_allocated[group] >= size);
+
+	HM_TRACE("[MemorySystem]: Freed %zu bytes", size);
+
+	if (group == HM_MEMORY_GROUP_UNKNOWN)
+		HM_WARN("[MemorySystem]: Freed memory with group HM_MEMORY_GROUP_UNKNOWN!");
 
 	memory_system.total_allocated -= size;
 	memory_system.groups_allocated[group] -= size;
