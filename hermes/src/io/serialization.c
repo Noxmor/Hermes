@@ -1,4 +1,4 @@
-#include "io.h"
+#include "serialization.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -175,6 +175,17 @@ SerializableData* serializable_data_create_from_file(const char* path)
 		HM_ERROR("[SerializableData]: Error in %s:%zu: Empty file!", path, line_number);
 
 	return root;
+}
+
+SerializableData* serializable_data_find(SerializableData* parent, const char* key)
+{
+	for (u64 i = 0; i < parent->children_count; ++i)
+	{
+		if (strcmp(parent->children[i]->key, key) == 0)
+			return parent->children[i];
+	}
+
+	return NULL;
 }
 
 void serializable_data_print(SerializableData* root, u64 offset)

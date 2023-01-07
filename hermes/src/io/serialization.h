@@ -15,6 +15,8 @@ SerializableData* serializable_data_create(const char* key, const char* value);
 
 SerializableData* serializable_data_create_from_file(const char* path);
 
+SerializableData* serializable_data_find(SerializableData* parent, const char* key);
+
 void serializable_data_log(SerializableData* root);
 
 void serializable_data_shutdown(SerializableData* root);
