@@ -31,17 +31,17 @@ b8 load_location_from_file(Location* location, const char* path)
 		return HM_FALSE;
 	}
 
-	if (strcmp(location_data->key, "location") != 0)
+	if (strcmp(location_data->key, "location") != 0 || !serializable_data_is_parent(location_data))
 	{
-		HM_ERROR("[LocationHandler]: Incorrect syntax in %s: Expected key \"location\" at the root node!");
+		HM_ERROR("[LocationHandler]: Incorrect syntax in %s: Expected key \"location\" at the root node!", path);
 		serializable_data_shutdown(location_data);
 		return HM_FALSE;
 	}
 
 	SerializableData* location_id_data = serializable_data_find(location_data, "id");
-	if (location_id_data == NULL)
+	if (location_id_data == NULL || !serializable_data_is_child(location_id_data))
 	{
-		HM_ERROR("[LocationHandler]: Incorrect syntax in %s: Node with key \"id\" was not found!");
+		HM_ERROR("[LocationHandler]: Incorrect syntax in %s: Child node with key \"id\" was not found!", path);
 		serializable_data_shutdown(location_data);
 		return HM_FALSE;
 	}
@@ -55,13 +55,21 @@ b8 load_location_from_file(Location* location, const char* path)
 
 		if (strcmp(child->key, "path") != 0)
 			continue;
+		else
+		{
+			if (!serializable_data_is_parent(child))
+			{
+				HM_WARN("[LocationHandler]: Incorrect syntax in %s: Path node needs to be a parent node! (Skipped path)", path);
+				continue;
+			}
+		}
 
 		SerializableData* path_data = child;
 
 		SerializableData* path_id_data = serializable_data_find(path_data, "id");
-		if (path_id_data == NULL)
+		if (path_id_data == NULL || !serializable_data_is_child(path_id_data))
 		{
-			HM_ERROR("[LocationHandler]: Incorrect syntax in %s: Path node has no child with key \"id\"! (Skipped path)");
+			HM_ERROR("[LocationHandler]: Incorrect syntax in %s: Path node has no child node with key \"id\"! (Skipped path)");
 			continue;
 		}
 
@@ -74,7 +82,7 @@ b8 load_location_from_file(Location* location, const char* path)
 		strcpy(location_path->name_id, path_id_data->value);
 
 		SerializableData* path_locked_data = serializable_data_find(path_data, "locked");
-		if (path_locked_data != NULL)
+		if (path_locked_data != NULL && serializable_data_is_child(path_locked_data))
 		{
 			if (strcmp(path_locked_data->value, "yes") == 0)
 				location_path->locked = HM_TRUE;
@@ -86,7 +94,7 @@ b8 load_location_from_file(Location* location, const char* path)
 		}
 
 		SerializableData* path_visible_data = serializable_data_find(path_data, "visible");
-		if (path_visible_data != NULL)
+		if (path_visible_data != NULL && serializable_data_is_child(path_visible_data))
 		{
 			if (strcmp(path_visible_data->value, "no") == 0)
 			location_path->visible = HM_FALSE;
