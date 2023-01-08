@@ -37,7 +37,7 @@ void config_handler_load_config(ConfigHandler* config_handler)
 		return;
 	}
 
-	if (strcmp(config_data->key, "config") != 0)
+	if (strcmp(config_data->key, "config") != 0 || !serializable_data_is_parent(config_data))
 	{
 		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Expected parent node with key \"config\"!");
 		serializable_data_shutdown(config_data);
@@ -45,16 +45,16 @@ void config_handler_load_config(ConfigHandler* config_handler)
 	}
 	
 	SerializableData* language_data = serializable_data_find(config_data, "language");
-	if (language_data != NULL)
+	if (language_data != NULL && serializable_data_is_child(language_data))
 	{
 		config_handler->language_key = memory_system_realloc(config_handler->language_key, (strlen(language_data->value) + 1) * sizeof(char), (strlen(config_handler->language_key) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 		strcpy(config_handler->language_key, language_data->value);
 	}
 	else
-		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"language\"!");
+		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no child node with key \"language\"!");
 
 	SerializableData* game_dir_data = serializable_data_find(config_data, "game_dir");
-	if (game_dir_data != NULL)
+	if (game_dir_data != NULL && serializable_data_is_child(game_dir_data))
 	{
 		config_handler->game_dir = memory_system_realloc(config_handler->game_dir, (strlen(game_dir_data->value) + 1) * sizeof(char), (strlen(config_handler->game_dir) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 		strcpy(config_handler->game_dir, game_dir_data->value);
@@ -63,7 +63,7 @@ void config_handler_load_config(ConfigHandler* config_handler)
 		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"game_dir\"!");
 
 	SerializableData* keybind_confirm_data = serializable_data_find(config_data, "keybind_confirm");
-	if (keybind_confirm_data != NULL)
+	if (keybind_confirm_data != NULL && serializable_data_is_child(keybind_confirm_data))
 	{
 		const KeyCode keycode = platform_str_to_keycode(keybind_confirm_data->value);
 		if (keycode != HM_KEY_UNKNOWN)
@@ -73,7 +73,7 @@ void config_handler_load_config(ConfigHandler* config_handler)
 		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"keybind_confirm\"!");
 
 	SerializableData* keybind_move_up_data = serializable_data_find(config_data, "keybind_move_up");
-	if (keybind_move_up_data != NULL)
+	if (keybind_move_up_data != NULL && serializable_data_is_child(keybind_move_up_data))
 	{
 		const KeyCode keycode = platform_str_to_keycode(keybind_move_up_data->value);
 		if (keycode != HM_KEY_UNKNOWN)
@@ -83,7 +83,7 @@ void config_handler_load_config(ConfigHandler* config_handler)
 		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"keybind_move_up\"!");
 
 	SerializableData* keybind_move_down_data = serializable_data_find(config_data, "keybind_move_down");
-	if (keybind_move_down_data != NULL)
+	if (keybind_move_down_data != NULL && serializable_data_is_child(keybind_move_down_data))
 	{
 		const KeyCode keycode = platform_str_to_keycode(keybind_move_down_data->value);
 		if (keycode != HM_KEY_UNKNOWN)
