@@ -40,6 +40,7 @@ void config_handler_load_config(ConfigHandler* config_handler)
 	if (strcmp(config_data->key, "config") != 0)
 	{
 		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Expected parent node with key \"config\"!");
+		serializable_data_shutdown(config_data);
 		return;
 	}
 	
@@ -90,6 +91,8 @@ void config_handler_load_config(ConfigHandler* config_handler)
 	}
 	else
 		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"keybind_move_down\"!");
+
+	serializable_data_shutdown(config_data);
 }
 
 b8 config_handler_save_config(ConfigHandler* config_handler)
@@ -111,7 +114,11 @@ b8 config_handler_save_config(ConfigHandler* config_handler)
 	SerializableData* keybind_move_down_data = serializable_data_create("keybind_move_down", platform_keycode_to_str(config_handler->keybind_move_down));
 	serializable_data_add_child(config_data, keybind_move_down_data);
 	
-	return serializable_data_save_to_file(config_data, CONFIG_PATH);
+	b8 success = serializable_data_save_to_file(config_data, CONFIG_PATH);
+
+	serializable_data_shutdown(config_data);
+
+	return success;
 }
 
 void config_handler_shutdown(ConfigHandler* config_handler)
