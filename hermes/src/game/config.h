@@ -17,7 +17,7 @@ ConfigHandler* config_handler_create(void);
 
 void config_handler_load_config(ConfigHandler* config_handler);
 
-void config_handler_save_config(ConfigHandler* config_handler);
+b8 config_handler_save_config(ConfigHandler* config_handler);
 
 void config_handler_shutdown(ConfigHandler* config_handler);
 

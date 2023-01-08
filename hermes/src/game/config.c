@@ -7,6 +7,10 @@
 
 #include "platform/platform.h"
 
+#include "io/serialization.h"
+
+#define CONFIG_PATH "Hermes.cfg"
+
 ConfigHandler* config_handler_create(void)
 {
 	ConfigHandler* config_handler = memory_system_malloc(sizeof(ConfigHandler), HM_MEMORY_GROUP_UNKNOWN);
@@ -15,122 +19,99 @@ ConfigHandler* config_handler_create(void)
 
 void config_handler_load_config(ConfigHandler* config_handler)
 {
-	FILE* f = fopen("Hermes.cfg", "r");
+	config_handler->language_key = memory_system_malloc((strlen("english") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+	strcpy(config_handler->language_key, "english");
 
-	if (f == NULL)
+	config_handler->game_dir = memory_system_malloc((strlen("base") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+	strcpy(config_handler->game_dir, "base");
+
+	config_handler->keybind_confirm = HM_KEY_RETURN;
+	config_handler->keybind_move_up = HM_KEY_ARROW_UP;
+	config_handler->keybind_move_down = HM_KEY_ARROW_DOWN; 
+	
+	SerializableData* config_data = serializable_data_create_from_file(CONFIG_PATH);
+
+	if (config_data == NULL)
 	{
-		HM_ERROR("[ConfigHandler]: Failed to open file \"Hermes.cfg\"!");
-
-		config_handler->language_key = memory_system_malloc((strlen("english") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
-		strcpy(config_handler->language_key, "english");
-
-		config_handler->game_dir = memory_system_malloc((strlen("base") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
-		strcpy(config_handler->game_dir, "base");
-
-		config_handler->keybind_confirm = HM_KEY_RETURN;
-		config_handler->keybind_move_up = HM_KEY_ARROW_UP;
-		config_handler->keybind_move_down = HM_KEY_ARROW_DOWN;
-
+		HM_WARN("[ConfigHandler]: Failed to open file \"Hermes.cfg\"!");
 		return;
 	}
 
-	u64 line_number = 0;
-
-	char buffer[256];
-
-	while (fgets(buffer, 256, f) != NULL)
+	if (strcmp(config_data->key, "config") != 0)
 	{
-		++line_number;
-		
-		if (strlen(buffer) == 0)
-			continue;
-
-		if (buffer[0] == '\n')
-			continue;
-
-		const char* splitter = strchr(buffer, '=');
-
-		if (splitter == NULL)
-		{
-			HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg:%zu: Found no '=' (Skipped line)", line_number);
-			continue;
-		}
-
-		const u64 splitter_index = (u64)(splitter - buffer);
-		
-		if (splitter_index == 0 || splitter_index == strlen(buffer) - 1)
-		{
-			HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg:%zu: '=' can't be at the beginning or end of a line (Skipped line)", line_number);
-			continue;
-		}
-
-		if(buffer[strlen(buffer) - 1] == '\n')
-			buffer[strlen(buffer) - 1] = '\0';
-
-		buffer[splitter_index] = '\0';
-
-		if (strcmp(buffer, "LANGUAGE") == 0)
-		{
-			config_handler->language_key = memory_system_malloc((strlen(buffer + splitter_index + 1) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
-			strcpy(config_handler->language_key, buffer + splitter_index + 1);
-		}
-		else if (strcmp(buffer, "GAME_DIR") == 0)
-		{
-			config_handler->game_dir = memory_system_malloc((strlen(buffer + splitter_index + 1) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
-			strcpy(config_handler->game_dir, buffer + splitter_index + 1);
-		}
-		else if (strcmp(buffer, "KEYBIND_CONFIRM") == 0)
-		{
-			const KeyCode keycode = platform_str_to_keycode(buffer + splitter_index + 1);
-			config_handler->keybind_confirm = keycode == HM_KEY_UNKNOWN ? HM_KEY_RETURN : keycode;
-		}
-		else if (strcmp(buffer, "KEYBIND_MOVE_UP") == 0)
-		{
-			const KeyCode keycode = platform_str_to_keycode(buffer + splitter_index + 1);
-			config_handler->keybind_move_up = keycode == HM_KEY_UNKNOWN ? HM_KEY_ARROW_UP : keycode;
-		}
-		else if (strcmp(buffer, "KEYBIND_MOVE_DOWN") == 0)
-		{
-			const KeyCode keycode = platform_str_to_keycode(buffer + splitter_index + 1);
-			config_handler->keybind_move_down = keycode == HM_KEY_UNKNOWN ? HM_KEY_ARROW_DOWN : keycode;
-		}
-		else
-			HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg:%zu: Unknown key \"%s\" (Skipped line)", buffer, line_number);
+		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Expected parent node with key \"config\"!");
+		return;
 	}
+	
+	SerializableData* language_data = serializable_data_find(config_data, "language");
+	if (language_data != NULL)
+	{
+		config_handler->language_key = memory_system_realloc(config_handler->language_key, (strlen(language_data->value) + 1) * sizeof(char), (strlen(config_handler->language_key) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+		strcpy(config_handler->language_key, language_data->value);
+	}
+	else
+		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"language\"!");
 
-	fclose(f);
+	SerializableData* game_dir_data = serializable_data_find(config_data, "game_dir");
+	if (game_dir_data != NULL)
+	{
+		config_handler->game_dir = memory_system_realloc(config_handler->game_dir, (strlen(game_dir_data->value) + 1) * sizeof(char), (strlen(config_handler->game_dir) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+		strcpy(config_handler->game_dir, game_dir_data->value);
+	}
+	else
+		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"game_dir\"!");
+
+	SerializableData* keybind_confirm_data = serializable_data_find(config_data, "keybind_confirm");
+	if (keybind_confirm_data != NULL)
+	{
+		const KeyCode keycode = platform_str_to_keycode(keybind_confirm_data->value);
+		if (keycode != HM_KEY_UNKNOWN)
+			config_handler->keybind_confirm = keycode;
+	}
+	else
+		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"keybind_confirm\"!");
+
+	SerializableData* keybind_move_up_data = serializable_data_find(config_data, "keybind_move_up");
+	if (keybind_move_up_data != NULL)
+	{
+		const KeyCode keycode = platform_str_to_keycode(keybind_move_up_data->value);
+		if (keycode != HM_KEY_UNKNOWN)
+			config_handler->keybind_move_up = keycode;
+	}
+	else
+		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"keybind_move_up\"!");
+
+	SerializableData* keybind_move_down_data = serializable_data_find(config_data, "keybind_move_down");
+	if (keybind_move_down_data != NULL)
+	{
+		const KeyCode keycode = platform_str_to_keycode(keybind_move_down_data->value);
+		if (keycode != HM_KEY_UNKNOWN)
+			config_handler->keybind_move_down = keycode;
+	}
+	else
+		HM_WARN("[ConfigHandler]: Incorrect syntax in Hermes.cfg: Found no node with key \"keybind_move_down\"!");
 }
 
-void config_handler_save_config(ConfigHandler* config_handler)
+b8 config_handler_save_config(ConfigHandler* config_handler)
 {
-	FILE* f = fopen("Hermes.cfg", "w");
+	SerializableData* config_data = serializable_data_create("config", NULL);
 
-	if (f == NULL)
-	{
-		HM_ERROR("[ConfigHandler]: Failed to create config file!");
-		return;
-	}
+	SerializableData* language_data = serializable_data_create("language", config_handler->language_key);
+	serializable_data_add_child(config_data, language_data);
 
-	fwrite("LANGUAGE=", sizeof(char), strlen("LANGUAGE="), f);
-	fwrite(config_handler->language_key, sizeof(char), strlen(config_handler->language_key), f);
-	fwrite("\n", sizeof(char), 1, f);
+	SerializableData* game_dir_data = serializable_data_create("game_dir", config_handler->game_dir);
+	serializable_data_add_child(config_data, game_dir_data);
 
-	fwrite("GAME_DIR=", sizeof(char), strlen("GAME_DIR="), f);
-	fwrite(config_handler->game_dir, sizeof(char), strlen(config_handler->game_dir), f);
-	fwrite("\n", sizeof(char), 1, f);
+	SerializableData* keybind_confirm_data = serializable_data_create("keybind_confirm", platform_keycode_to_str(config_handler->keybind_confirm));
+	serializable_data_add_child(config_data, keybind_confirm_data);
 
-	fwrite("KEYBIND_CONFIRM=", sizeof(char), strlen("KEYBIND_CONFIRM="), f);
-	fwrite(platform_keycode_to_str(config_handler->keybind_confirm), sizeof(char), strlen(platform_keycode_to_str(config_handler->keybind_confirm)), f);
-	fwrite("\n", sizeof(char), 1, f);
+	SerializableData* keybind_move_up_data = serializable_data_create("keybind_move_up", platform_keycode_to_str(config_handler->keybind_move_up));
+	serializable_data_add_child(config_data, keybind_move_up_data);
 
-	fwrite("KEYBIND_MOVE_UP=", sizeof(char), strlen("KEYBIND_MOVE_UP="), f);
-	fwrite(platform_keycode_to_str(config_handler->keybind_move_up), sizeof(char), strlen(platform_keycode_to_str(config_handler->keybind_move_up)), f);
-	fwrite("\n", sizeof(char), 1, f);
-
-	fwrite("KEYBIND_MOVE_DOWN=", sizeof(char), strlen("KEYBIND_MOVE_DOWN="), f);
-	fwrite(platform_keycode_to_str(config_handler->keybind_move_down), sizeof(char), strlen(platform_keycode_to_str(config_handler->keybind_move_down)), f);
-
-	fclose(f);
+	SerializableData* keybind_move_down_data = serializable_data_create("keybind_move_down", platform_keycode_to_str(config_handler->keybind_move_down));
+	serializable_data_add_child(config_data, keybind_move_down_data);
+	
+	return serializable_data_save_to_file(config_data, CONFIG_PATH);
 }
 
 void config_handler_shutdown(ConfigHandler* config_handler)
