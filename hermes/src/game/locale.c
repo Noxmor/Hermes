@@ -5,6 +5,10 @@
 
 #include "core/memory_system.h"
 
+#include "io/serialization.h"
+
+#define INVALID_LOCALE "INVALID_LOCALE"
+
 void locale_shutdown(Locale* locale)
 {
 	if (locale->key != NULL)
@@ -88,164 +92,88 @@ const char* locale_handler_get(LocaleHandler* locale_handler, const char* key)
 	return locale_handler->locales[index].value;
 }
 
-b8 load_language_definitions(LocaleHandler* locale_handler, const char* path)
-{
-	FILE* f = fopen(path, "r");
-
-	if (f == NULL)
-	{
-		HM_ERROR("[LocaleHandler]: Could not open file \"%s\"!", path);
-		return HM_FALSE;
-	}
-
-	locale_handler->languages = NULL;
-
-	locale_handler->language_count = 0;
-
-	char buffer[256];
-
-	while (fgets(buffer, 256, f) != NULL)
-	{
-		if (strlen(buffer) > 1 && buffer[strlen(buffer) - 1 - 1] == ':')
-		{
-			++locale_handler->language_count;
-
-			buffer[strlen(buffer) - 1 - 1] = '\0';
-
-			locale_handler->languages = memory_system_realloc(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), (locale_handler->language_count - 1) * sizeof(Locale*), HM_MEMORY_GROUP_UNKNOWN);
-			locale_handler->languages[locale_handler->language_count - 1] = memory_system_malloc(sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
-			Locale* locale = locale_handler->languages[locale_handler->language_count - 1];
-			locale->key = memory_system_malloc((strlen(buffer) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
-			strcpy(locale->key, buffer);
-		}
-	}
-
-	fclose(f);
-
-	return HM_TRUE;
-}
-
-b8 locale_handler_load_languages(LocaleHandler* locale_handler, const char* game_dir, const char* current_language_key)
+void locale_handler_load_languages(LocaleHandler* locale_handler, const char* game_dir, const char* current_language_key)
 {
 	char* path = memory_system_calloc(strlen(game_dir) + strlen("/locale/languages.txt") + 1, sizeof(char), HM_MEMORY_GROUP_STRING);
 	sprintf(path, "%s/locale/languages.txt", game_dir);
 
-	if (!load_language_definitions(locale_handler, path))
+	SerializableData* language_data = serializable_data_create_from_file(path);
+
+	if (language_data == NULL)
 	{
-		memory_system_free(path, (strlen(game_dir) + strlen("/locale/languages.txt") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
-		
-		return HM_FALSE;
+		HM_ERROR("[LocaleHandler]: Incorrect syntax in %s: Empty file!", path);
+		memory_system_free(path, (strlen(path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+		return;
 	}
 
-	FILE* f = fopen(path, "r");
-
-	if (f == NULL)
+	if (strcmp(language_data->key, "languages") != 0)
 	{
-		HM_ERROR("[LocaleHandler]: Could not open file \"%s\"!", path);
-
-		memory_system_free(path, (strlen(game_dir) + strlen("/locale/languages.txt") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
-
-		return HM_FALSE;
+		HM_ERROR("[LocaleHandler]: Incorrect syntax in %s: Expected parent node with key \"languages\"!", path);
+		serializable_data_shutdown(language_data);
+		memory_system_free(path, (strlen(path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+		return;
 	}
 
-	memory_system_free(path, (strlen(game_dir) + strlen("/locale/languages.txt") + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+	locale_handler->languages = NULL;
+	locale_handler->language_count = 0;
 
-	u8 language_index = 0;
-	u64 line_number = 0;
-
-	char buffer[256];
-
-	while (fgets(buffer, 256, f) != NULL)
+	for (u64 i = 0; i < language_data->children_count; ++i)
 	{
-		++line_number;
-		
-		if (strlen(buffer) == 0)
-			continue;
+		SerializableData* language_definition_data = language_data->children[i];
 
-		const u64 buffer_language_len = strlen(buffer) - 1 - 1;
+		++(locale_handler->language_count);
 
-		if (buffer[buffer_language_len] != ':')
-			continue;
+		locale_handler->languages = memory_system_realloc(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), (locale_handler->language_count - 1) * sizeof(Locale*), HM_MEMORY_GROUP_UNKNOWN);
+		locale_handler->languages[locale_handler->language_count - 1] = memory_system_malloc(sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
+		Locale* locale = locale_handler->languages[locale_handler->language_count - 1];
+		locale->key = memory_system_malloc((strlen(language_definition_data->key) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+		strcpy(locale->key, language_definition_data->key);
+	}
 
-		if(strncmp(buffer, current_language_key, strlen(current_language_key)) != 0)
-			continue;
+	SerializableData* target_language_data = serializable_data_find(language_data, current_language_key);
 
-		while (fgets(buffer, 256, f) != NULL)
+	if (target_language_data == NULL)
+	{
+		HM_ERROR("[LocaleHandler]: Incorrect syntax in %s: Found no definition of language \"%s\"!", path, current_language_key);
+		serializable_data_shutdown(language_data);
+		memory_system_free(path, (strlen(path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+
+		for (u64 i = 0; i < locale_handler->language_count; ++i)
 		{
-			++line_number;
-
-			if (strlen(buffer) == 0)
-				continue;
-
-			if (buffer[strlen(buffer) - 1] == '\n')
-				buffer[strlen(buffer) - 1] = '\0';
-
-			if (buffer[0] != ' ')
-			{
-				if (buffer[strlen(buffer) - 1] == ':')
-				{
-					HM_ERROR("[LocaleHandler]: Error in locale/languages.txt:%zu: Found definition of next language before loading all %zu known languages with target language \"%s\"!", line_number, locale_handler->language_count, current_language_key);
-					fclose(f);
-					return HM_FALSE;
-				}
-
-				HM_WARN("[LocaleHandler]: Incorrect syntax in locale/languages.txt:%zu: Line needs to be indentated with one whitespace (Skipped line)", line_number);
-				continue;
-			}
-			
-			const char* splitter = strchr(buffer, '=');
-		
-			if (splitter == NULL)
-			{
-				HM_WARN("[LocaleHandler]: Incorrect syntax in locale/languages.txt:%zu: Found no '=' (Skipped line)", line_number);
-				continue;
-			}
-		
-			const u64 splitter_index = (u64)(splitter - buffer);
-		
-			if (splitter_index == 1 || splitter_index == strlen(buffer) - 1)
-			{
-				HM_WARN("[LocaleHandler]: Incorrect syntax in locale/languages.txt:%zu: '=' can't be at the beginning or end of a line (Skipped line)", line_number);
-				continue;
-			}
-			
-			buffer[splitter_index] = '\0';
-
-			if (strcmp(locale_handler->languages[language_index]->key, buffer + 1) != 0)
-			{
-				HM_ERROR("[LocaleHandler]: Error in locale/languages.txt:%zu: Invalid order of language definitions! Expected key \"%s\"", line_number, locale_handler->languages[language_index]->key);
-				fclose(f);
-				return HM_FALSE;
-			}
-
-			locale_handler->languages[language_index]->value = memory_system_calloc(strlen(buffer + splitter_index + 1) + 1, sizeof(char), HM_MEMORY_GROUP_STRING);
-			memcpy(locale_handler->languages[language_index]->value, buffer + splitter_index + 1, strlen(buffer + splitter_index + 1));
-
-			HM_TRACE("[LocaleHandler]: Loaded language: Key: \"%s\", Value: \"%s\"", locale_handler->languages[language_index]->key, locale_handler->languages[language_index]->value);
-
-			if (++language_index >= locale_handler->language_count)
-				break;
+			Locale* locale = locale_handler->languages[i];
+			locale->value = memory_system_malloc((strlen(INVALID_LOCALE) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+			strcpy(locale->value, INVALID_LOCALE);
 		}
 
-		while (fgets(buffer, 256, f) != NULL)
-		{
-			++line_number;
-
-			if (strlen(buffer) == 0)
-				continue;
-
-			if (buffer[0] != ' ')
-				break;
-
-			HM_WARN("[LocaleHandler]: locale/languages.txt:%zu: Already read all languages! (Skipped line)", line_number);
-		}
-
-		break;
+		return;
 	}
 
-	fclose(f);
+	for (u64 i = 0; i < target_language_data->children_count; ++i)
+	{
+		SerializableData* child = target_language_data->children[i];
 
-	return HM_TRUE;
+		if (i >= locale_handler->language_count)
+		{
+			HM_WARN("[LocaleHandler]: Incorrect syntax in %s: Too many language definitions in language node \"%s\"! (Skipping excess definitions)", path, target_language_data->key);
+			break;
+		}
+
+		Locale* locale = locale_handler->languages[i];
+
+		if (strcmp(child->key, locale->key) != 0)
+		{
+			HM_WARN("[LocaleHandler]: Incorrect syntax in %s: Wrong order of language definitions: Expected \"%s\", but got \"%s\"! (Skipped)", path, locale->key, child->key);
+			locale->value = memory_system_malloc((strlen(INVALID_LOCALE) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+			strcpy(locale->value, INVALID_LOCALE);
+			continue;
+		}
+
+		locale->value = memory_system_malloc((strlen(child->value) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+		strcpy(locale->value, child->value);
+	}
+
+	serializable_data_shutdown(language_data);
+	memory_system_free(path, (strlen(path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 }
 
 b8 load_locale(LocaleHandler* locale_handler, const char* path)
