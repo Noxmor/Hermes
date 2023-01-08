@@ -25,6 +25,12 @@ b8 load_location_from_file(Location* location, const char* path)
 
 	SerializableData* location_data = serializable_data_create_from_file(path);
 
+	if (location_data == NULL)
+	{
+		HM_ERROR("[LocationHandler]: Incorrect syntax in %s: Empty file!");
+		return HM_FALSE;
+	}
+
 	if (strcmp(location_data->key, "location") != 0)
 	{
 		HM_ERROR("[LocationHandler]: Incorrect syntax in %s: Expected key \"location\" at the root node!");
