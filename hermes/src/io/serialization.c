@@ -258,6 +258,16 @@ SerializableData* serializable_data_find(SerializableData* parent, const char* k
 	return NULL;
 }
 
+b8 serializable_data_is_parent(SerializableData* serializable_data)
+{
+	return serializable_data->children_count > 0 && serializable_data->value == NULL;
+}
+
+b8 serializable_data_is_child(SerializableData* serializable_data)
+{
+	return serializable_data->children_count == 0 && serializable_data->value != NULL;
+}
+
 void serializable_data_print(SerializableData* root, u64 offset)
 {
 	char whitespaces[offset + 1];

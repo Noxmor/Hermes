@@ -21,6 +21,10 @@ void serializable_data_add_child(SerializableData* parent, SerializableData* chi
 
 SerializableData* serializable_data_find(SerializableData* parent, const char* key);
 
+b8 serializable_data_is_parent(SerializableData* serializable_data);
+
+b8 serializable_data_is_child(SerializableData* serializable_data);
+
 void serializable_data_log(SerializableData* root);
 
 void serializable_data_shutdown(SerializableData* root);
