@@ -25,9 +25,9 @@ void locale_handler_insert(LocaleHandler* locale_handler, const char* key, const
 
 const char* locale_handler_get(LocaleHandler* locale_handler, const char* key);
 
-void locale_handler_load_languages(LocaleHandler* locale_handler, const char* game_dir, const char* current_language_key);
+void locale_handler_load_languages(LocaleHandler* locale_handler, const char* game_dir, const char* language_key);
 
-b8 locale_handler_load_locales(LocaleHandler* locale_handler, const char* game_dir, const char* current_language_key);
+void locale_handler_load_locales(LocaleHandler* locale_handler, const char* game_dir, const char* language_key);
 
 void locale_handler_shutdown(LocaleHandler* locale_handler);
 

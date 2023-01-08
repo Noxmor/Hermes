@@ -92,7 +92,7 @@ const char* locale_handler_get(LocaleHandler* locale_handler, const char* key)
 	return locale_handler->locales[index].value;
 }
 
-void locale_handler_load_languages(LocaleHandler* locale_handler, const char* game_dir, const char* current_language_key)
+void locale_handler_load_languages(LocaleHandler* locale_handler, const char* game_dir, const char* language_key)
 {
 	char* path = memory_system_calloc(strlen(game_dir) + strlen("/locale/languages.txt") + 1, sizeof(char), HM_MEMORY_GROUP_STRING);
 	sprintf(path, "%s/locale/languages.txt", game_dir);
@@ -106,7 +106,7 @@ void locale_handler_load_languages(LocaleHandler* locale_handler, const char* ga
 		return;
 	}
 
-	if (strcmp(language_data->key, "languages") != 0)
+	if (strcmp(language_data->key, "languages") != 0 || !serializable_data_is_parent(language_data))
 	{
 		HM_ERROR("[LocaleHandler]: Incorrect syntax in %s: Expected parent node with key \"languages\"!", path);
 		serializable_data_shutdown(language_data);
@@ -121,6 +121,12 @@ void locale_handler_load_languages(LocaleHandler* locale_handler, const char* ga
 	{
 		SerializableData* language_definition_data = language_data->children[i];
 
+		if (!serializable_data_is_parent(language_definition_data))
+		{
+			HM_WARN("[LocaleHandler]: Incorrect syntax in %s: Expected parent node, but got child node with key \"%s\" and value \"%s\"!", path, language_definition_data->key, language_definition_data->value);
+			continue;
+		}
+
 		++(locale_handler->language_count);
 
 		locale_handler->languages = memory_system_realloc(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), (locale_handler->language_count - 1) * sizeof(Locale*), HM_MEMORY_GROUP_UNKNOWN);
@@ -130,11 +136,11 @@ void locale_handler_load_languages(LocaleHandler* locale_handler, const char* ga
 		strcpy(locale->key, language_definition_data->key);
 	}
 
-	SerializableData* target_language_data = serializable_data_find(language_data, current_language_key);
+	SerializableData* target_language_data = serializable_data_find(language_data, language_key);
 
 	if (target_language_data == NULL)
 	{
-		HM_ERROR("[LocaleHandler]: Incorrect syntax in %s: Found no definition of language \"%s\"!", path, current_language_key);
+		HM_ERROR("[LocaleHandler]: Incorrect syntax in %s: Found no definition of language \"%s\"!", path, language_key);
 		serializable_data_shutdown(language_data);
 		memory_system_free(path, (strlen(path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 
@@ -148,9 +154,33 @@ void locale_handler_load_languages(LocaleHandler* locale_handler, const char* ga
 		return;
 	}
 
+	if (!serializable_data_is_parent(target_language_data))
+	{
+		HM_WARN("[LocaleHandler]: Incorrect syntax in %s: Expected node with key \"%s\" to be a parent node, not a child node!", path, language_key); 
+		
+		for (u64 i = 0; i < locale_handler->language_count; ++i)
+		{
+			Locale* locale = locale_handler->languages[i];
+			locale->value = memory_system_malloc((strlen(INVALID_LOCALE) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+			strcpy(locale->value, INVALID_LOCALE);
+		}
+	}
+
 	for (u64 i = 0; i < target_language_data->children_count; ++i)
 	{
 		SerializableData* child = target_language_data->children[i];
+
+		if (!serializable_data_is_child(child))
+		{
+			HM_WARN("[LocaleHandler]: Incorrect syntax in %s: Expected node with key \"%s\" to be a child node, not a parent node!", path, child->key);
+
+			Locale* locale = locale_handler->languages[i];
+
+			locale->value = memory_system_malloc((strlen(INVALID_LOCALE) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
+			strcpy(locale->value, INVALID_LOCALE);
+
+			continue;
+		}
 
 		if (i >= locale_handler->language_count)
 		{
@@ -176,60 +206,40 @@ void locale_handler_load_languages(LocaleHandler* locale_handler, const char* ga
 	memory_system_free(path, (strlen(path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 }
 
-b8 load_locale(LocaleHandler* locale_handler, const char* path)
+void load_locale(LocaleHandler* locale_handler, const char* language_key, const char* path)
 {
-	FILE* f = fopen(path, "r");
+	SerializableData* locale_data = serializable_data_create_from_file(path);
 
-	if (f == NULL)
+	if (locale_data == NULL)
 	{
-		HM_ERROR("[LocaleHandler]: Failed to open file \"%s\"!", path);
-		return HM_FALSE;
+		HM_ERROR("[LocaleHandler]: Incorrect syntax in %s: Empty file!", path);
+		return;
 	}
 
-	u64 line_number = 0;
-
-	char buffer[256];
-
-	while (fgets(buffer, 256, f) != NULL)
+	if (strcmp(locale_data->key, language_key) != 0 || !serializable_data_is_parent(locale_data))
 	{
-		++line_number;
-		
-		if (strlen(buffer) == 0)
-			continue;
+		HM_ERROR("[LocaleHandler]: Incorrect syntax in %s: Expected parent node with key \"%s\"!", path, language_key);
+		serializable_data_shutdown(locale_data);
+		return;
+	}
 
-		if (buffer[0] == '\n' || buffer[0] == '\r')
-			continue;
+	for (u64 i = 0; i < locale_data->children_count; ++i)
+	{
+		SerializableData* child = locale_data->children[i];
 
-		if (buffer[strlen(buffer) - 1] == '\n')
-			buffer[strlen(buffer) - 1] = '\0';
-
-		const char* splitter = strchr(buffer, '=');
-
-		if (splitter == NULL)
+		if (!serializable_data_is_child(child))
 		{
-			HM_WARN("[LocaleHandler]: Incorrect syntax in %s:%zu: Found no '=' (Skipped line)", path, line_number);
+			HM_WARN("[LocaleHandler]: Incorrect syntax in %s: Expected child node, but got parent node with key \"%s\"!", path, child->key);
 			continue;
 		}
 
-		const u64 splitter_index = (u64)(splitter - buffer);
-
-		if (splitter_index == 0 || splitter_index == strlen(buffer) - 1)
-		{
-			HM_WARN("[LocaleHandler]: Incorrect syntax in %s:%zu: '=' can't be at the beginning or end of a line (Skipped line)", path, line_number);
-			continue;
-		}
-
-		buffer[splitter_index] = '\0';
-		locale_handler_insert(locale_handler, buffer, buffer + splitter_index + 1);
-		HM_TRACE("[LocaleHandler]: Loaded locale: Key: \"%s\", Value: \"%s\"", buffer, buffer + splitter_index + 1);
+		locale_handler_insert(locale_handler, child->key, child->value);
 	}
 
-	fclose(f);
-
-	return HM_TRUE;
+	serializable_data_shutdown(locale_data);
 }
 
-b8 locale_handler_load_locales(LocaleHandler* locale_handler, const char* game_dir, const char* current_language_key)
+void locale_handler_load_locales(LocaleHandler* locale_handler, const char* game_dir, const char* language_key)
 {
 	char path[256];
 
@@ -238,12 +248,9 @@ b8 locale_handler_load_locales(LocaleHandler* locale_handler, const char* game_d
 
 	for (u64 i = 0; i < FILES_TO_LOAD_COUNT; ++i)
 	{
-		sprintf(path, "%s/locale/%s/%s.txt", game_dir, current_language_key, files_to_load[i]);
-		if (!load_locale(locale_handler, path))
-			return HM_FALSE;
+		sprintf(path, "%s/locale/%s/%s.txt", game_dir, language_key, files_to_load[i]);
+		load_locale(locale_handler, language_key, path);
 	}
-
-	return HM_TRUE;
 }
 
 void locale_handler_shutdown(LocaleHandler* locale_handler)
