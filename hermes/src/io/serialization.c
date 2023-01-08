@@ -52,6 +52,9 @@ SerializableData* serializable_data_create_from_file(const char* path)
 		if (strlen(buffer) == 0)
 			continue;
 
+		if (buffer[0] == '\n')
+			continue;
+
 		if (buffer[0] == '#')
 			continue;
 
@@ -83,6 +86,9 @@ SerializableData* serializable_data_create_from_file(const char* path)
 		++line_number;
 
 		if (strlen(buffer) == 0)
+			continue;
+
+		if (buffer[0] == '\n')
 			continue;
 
 		if (buffer[0] == '#')
