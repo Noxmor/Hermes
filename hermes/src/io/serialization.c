@@ -177,6 +177,70 @@ SerializableData* serializable_data_create_from_file(const char* path)
 	return root;
 }
 
+b8 save_to_file(SerializableData* data, u64 whitespace_count, FILE* f)
+{
+	if (fwrite(" ", sizeof(char), whitespace_count, f) != whitespace_count)
+		return HM_FALSE;
+
+	if (data->children_count == 0)
+	{
+		if (fwrite(data->key, sizeof(char), strlen(data->key), f) != strlen(data->key))
+			return HM_FALSE;
+		
+		if (fwrite("=", sizeof(char), 1, f) != 1)
+			return HM_FALSE;
+
+		if (fwrite(data->value, sizeof(char), strlen(data->value), f) != strlen(data->value))
+			return HM_FALSE;
+
+		if (fwrite("\n", sizeof(char), 1, f) != 1)
+			return HM_FALSE;
+	}
+	else
+	{
+		if (fwrite(data->key, sizeof(char), strlen(data->key), f) != strlen(data->key))
+			return HM_FALSE;
+
+		if (fwrite(":", sizeof(char), 1, f) != 1)
+			return HM_FALSE;
+
+		if (fwrite("\n", sizeof(char), 1, f) != 1)
+			return HM_FALSE;
+
+		for (u64 i = 0; i < data->children_count; ++i)
+		{
+			if (!save_to_file(data->children[i], whitespace_count + 1, f))
+				return HM_FALSE;
+		}
+	}
+
+	return HM_TRUE;
+}
+
+b8 serializable_data_save_to_file(SerializableData* root, const char* path)
+{
+	FILE* f = fopen(path, "w");
+
+	if (f == NULL)
+	{
+		HM_ERROR("[SerializableData]: Failed to open file \"%s\"!", path);
+		return HM_FALSE;
+	}
+
+	b8 success = save_to_file(root, 0, f);
+
+	fclose(f);
+
+	return success;
+}
+
+void serializable_data_add_child(SerializableData* parent, SerializableData* child)
+{
+	++(parent->children_count);
+	parent->children = memory_system_realloc(parent->children, parent->children_count * sizeof(SerializableData*), (parent->children_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+	parent->children[parent->children_count - 1] = child;
+}
+
 SerializableData* serializable_data_find(SerializableData* parent, const char* key)
 {
 	for (u64 i = 0; i < parent->children_count; ++i)
