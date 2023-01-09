@@ -7,7 +7,7 @@
 
 SerializableData* serializable_data_create(const char* key, const char* value)
 {
-	SerializableData* serializable_data = memory_system_malloc(sizeof(SerializableData), HM_MEMORY_GROUP_UNKNOWN);
+	SerializableData* serializable_data = memory_system_malloc(sizeof(SerializableData), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 	serializable_data->key = memory_system_malloc((strlen(key) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 	strcpy(serializable_data->key, key);
 
@@ -78,7 +78,7 @@ SerializableData* serializable_data_create_from_file(const char* path)
 	}
 
 	u64 parent_node_count = 1;
-	SerializableData** parent_nodes = memory_system_malloc(parent_node_count * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+	SerializableData** parent_nodes = memory_system_malloc(parent_node_count * sizeof(SerializableData*), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 	parent_nodes[0] = parent;
 
 	while (fgets(buffer, 256, f) != NULL)
@@ -114,7 +114,7 @@ SerializableData* serializable_data_create_from_file(const char* path)
 				HM_WARN("[SerializableData]: Incorrect syntax in %s:%zu: Parent node \"%s\" has no children!", path, line_number, parent->key);
 			
 			--parent_node_count;
-			parent_nodes = memory_system_realloc(parent_nodes, parent_node_count * sizeof(SerializableData*), (parent_node_count + 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+			parent_nodes = memory_system_realloc(parent_nodes, parent_node_count * sizeof(SerializableData*), (parent_node_count + 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 			parent = parent_nodes[parent_node_count - 1];
 
 			--indentation_level;
@@ -134,14 +134,14 @@ SerializableData* serializable_data_create_from_file(const char* path)
 
 			++(parent->children_count);
 
-			parent->children = memory_system_realloc(parent->children, parent->children_count * sizeof(SerializableData*), (parent->children_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+			parent->children = memory_system_realloc(parent->children, parent->children_count * sizeof(SerializableData*), (parent->children_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 
 			parent->children[parent->children_count - 1] = serializable_data_create(buffer + indentation_level, NULL);
 
 			parent = parent->children[parent->children_count - 1];
 
 			++parent_node_count;
-			parent_nodes = memory_system_realloc(parent_nodes, parent_node_count * sizeof(SerializableData*), (parent_node_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+			parent_nodes = memory_system_realloc(parent_nodes, parent_node_count * sizeof(SerializableData*), (parent_node_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 			parent_nodes[parent_node_count - 1] = parent;
 
 			++indentation_level;
@@ -168,14 +168,14 @@ SerializableData* serializable_data_create_from_file(const char* path)
 		buffer[splitter_index] = '\0';
 
 		++(parent->children_count);
-		parent->children = memory_system_realloc(parent->children, parent->children_count * sizeof(SerializableData*), (parent->children_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+		parent->children = memory_system_realloc(parent->children, parent->children_count * sizeof(SerializableData*), (parent->children_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 
 		parent->children[parent->children_count - 1] = serializable_data_create(buffer + indentation_level, buffer + splitter_index + 1);
 	}
 
 	fclose(f);
 
-	memory_system_free(parent_nodes, parent_node_count * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(parent_nodes, parent_node_count * sizeof(SerializableData*), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 
 	if(root == NULL)
 		HM_ERROR("[SerializableData]: Error in %s:%zu: Empty file!", path, line_number);
@@ -243,7 +243,7 @@ b8 serializable_data_save_to_file(SerializableData* root, const char* path)
 void serializable_data_add_child(SerializableData* parent, SerializableData* child)
 {
 	++(parent->children_count);
-	parent->children = memory_system_realloc(parent->children, parent->children_count * sizeof(SerializableData*), (parent->children_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+	parent->children = memory_system_realloc(parent->children, parent->children_count * sizeof(SerializableData*), (parent->children_count - 1) * sizeof(SerializableData*), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 	parent->children[parent->children_count - 1] = child;
 }
 
@@ -303,8 +303,8 @@ void serializable_data_shutdown(SerializableData* root)
 		for (u64 i = 0; i < root->children_count; ++i)
 			serializable_data_shutdown(root->children[i]);
 
-		memory_system_free(root->children, root->children_count * sizeof(SerializableData*), HM_MEMORY_GROUP_UNKNOWN);
+		memory_system_free(root->children, root->children_count * sizeof(SerializableData*), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 	}
 
-	memory_system_free(root, sizeof(SerializableData), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(root, sizeof(SerializableData), HM_MEMORY_GROUP_SERIALIZABLE_DATA);
 }

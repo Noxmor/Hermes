@@ -11,7 +11,7 @@
 
 LocationHandler* location_handler_create(void)
 {
-	LocationHandler* location_handler = memory_system_malloc(sizeof(LocationHandler), HM_MEMORY_GROUP_UNKNOWN);
+	LocationHandler* location_handler = memory_system_malloc(sizeof(LocationHandler), HM_MEMORY_GROUP_LOCATION_HANDLER);
 	location_handler->location_count = 0;
 	location_handler->locations = NULL;
 	return location_handler;
@@ -74,7 +74,7 @@ b8 load_location_from_file(Location* location, const char* path)
 		}
 
 		++(location->path_count);
-		location->paths = memory_system_realloc(location->paths, location->path_count * sizeof(LocationPath), (location->path_count - 1) * sizeof(LocationPath), HM_MEMORY_GROUP_UNKNOWN);
+		location->paths = memory_system_realloc(location->paths, location->path_count * sizeof(LocationPath), (location->path_count - 1) * sizeof(LocationPath), HM_MEMORY_GROUP_LOCATION_PATH);
 		LocationPath* location_path = &location->paths[location->path_count - 1];
 		location_path->locked = HM_FALSE;
 		location_path->visible = HM_TRUE;
@@ -118,7 +118,7 @@ void location_handler_load_locations(LocationHandler* location_handler, const ch
 	
 	char** location_files = platform_get_files_in_dir(path, &location_handler->location_count);
 
-	location_handler->locations = memory_system_malloc(location_handler->location_count * sizeof(Location), HM_MEMORY_GROUP_UNKNOWN);
+	location_handler->locations = memory_system_malloc(location_handler->location_count * sizeof(Location), HM_MEMORY_GROUP_LOCATION);
 
 	for (u64 i = 0; i < location_handler->location_count; ++i)
 	{
@@ -128,7 +128,7 @@ void location_handler_load_locations(LocationHandler* location_handler, const ch
 		if (!load_location_from_file(location_handler->locations + i, path))
 		{
 			--(location_handler->location_count);
-			location_handler->locations = memory_system_realloc(location_handler->locations, location_handler->location_count * sizeof(Location), (location_handler->location_count + 1) * sizeof(Location), HM_MEMORY_GROUP_UNKNOWN);
+			location_handler->locations = memory_system_realloc(location_handler->locations, location_handler->location_count * sizeof(Location), (location_handler->location_count + 1) * sizeof(Location), HM_MEMORY_GROUP_LOCATION);
 		}
 	}
 
@@ -153,10 +153,10 @@ void location_handler_shutdown(LocationHandler* location_handler)
 			memory_system_free(location_path->name_id, (strlen(location_path->name_id) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 		}
 
-		memory_system_free(location->paths, location->path_count * sizeof(LocationPath), HM_MEMORY_GROUP_UNKNOWN);
+		memory_system_free(location->paths, location->path_count * sizeof(LocationPath), HM_MEMORY_GROUP_LOCATION_PATH);
 		memory_system_free(location->name_id, (strlen(location->name_id) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 	}
 	
-	memory_system_free(location_handler->locations, location_handler->location_count * sizeof(Location), HM_MEMORY_GROUP_UNKNOWN);
-	memory_system_free(location_handler, sizeof(LocationHandler), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(location_handler->locations, location_handler->location_count * sizeof(Location), HM_MEMORY_GROUP_LOCATION);
+	memory_system_free(location_handler, sizeof(LocationHandler), HM_MEMORY_GROUP_LOCATION_HANDLER);
 }

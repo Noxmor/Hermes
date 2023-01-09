@@ -17,7 +17,7 @@ void locale_shutdown(Locale* locale)
 		memory_system_free(locale->value, (strlen(locale->value) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 	}
 
-	memory_system_free(locale, sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(locale, sizeof(Locale), HM_MEMORY_GROUP_LOCALE);
 }
 
 // Source: https://github.com/aappleby/smhasher/blob/master/src/Hashes.cpp
@@ -37,9 +37,9 @@ u32 hash(const char* str)
 
 LocaleHandler* locale_handler_create(u32 size)
 {
-	LocaleHandler* locale_handler = memory_system_malloc(sizeof(LocaleHandler), HM_MEMORY_GROUP_UNKNOWN);
+	LocaleHandler* locale_handler = memory_system_malloc(sizeof(LocaleHandler), HM_MEMORY_GROUP_LOCALE_HANDLER);
 	locale_handler->size = size;
-	locale_handler->locales = memory_system_calloc(size, sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
+	locale_handler->locales = memory_system_calloc(size, sizeof(Locale), HM_MEMORY_GROUP_LOCALE);
 	return locale_handler;
 }
 
@@ -129,8 +129,8 @@ void locale_handler_load_languages(LocaleHandler* locale_handler, const char* ga
 
 		++(locale_handler->language_count);
 
-		locale_handler->languages = memory_system_realloc(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), (locale_handler->language_count - 1) * sizeof(Locale*), HM_MEMORY_GROUP_UNKNOWN);
-		locale_handler->languages[locale_handler->language_count - 1] = memory_system_malloc(sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
+		locale_handler->languages = memory_system_realloc(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), (locale_handler->language_count - 1) * sizeof(Locale*), HM_MEMORY_GROUP_LOCALE);
+		locale_handler->languages[locale_handler->language_count - 1] = memory_system_malloc(sizeof(Locale), HM_MEMORY_GROUP_LOCALE);
 		Locale* locale = locale_handler->languages[locale_handler->language_count - 1];
 		locale->key = memory_system_malloc((strlen(language_definition_data->key) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 		strcpy(locale->key, language_definition_data->key);
@@ -266,12 +266,12 @@ void locale_handler_shutdown(LocaleHandler* locale_handler)
 		}
 	}
 	
-	memory_system_free(locale_handler->locales, locale_handler->size * sizeof(Locale), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(locale_handler->locales, locale_handler->size * sizeof(Locale), HM_MEMORY_GROUP_LOCALE);
 	
 	for (u8 i = 0; i < locale_handler->language_count; ++i)
 		locale_shutdown(locale_handler->languages[i]);
 	
-	memory_system_free(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(locale_handler->languages, locale_handler->language_count * sizeof(Locale*), HM_MEMORY_GROUP_LOCALE);
 	
-	memory_system_free(locale_handler, sizeof(LocaleHandler), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(locale_handler, sizeof(LocaleHandler), HM_MEMORY_GROUP_LOCALE_HANDLER);
 }

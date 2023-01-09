@@ -13,7 +13,7 @@
 
 ConfigHandler* config_handler_create(void)
 {
-	ConfigHandler* config_handler = memory_system_malloc(sizeof(ConfigHandler), HM_MEMORY_GROUP_UNKNOWN);
+	ConfigHandler* config_handler = memory_system_malloc(sizeof(ConfigHandler), HM_MEMORY_GROUP_CONFIG_HANDLER);
 	return config_handler;
 }
 
@@ -126,5 +126,5 @@ void config_handler_shutdown(ConfigHandler* config_handler)
 	memory_system_free(config_handler->language_key, (strlen(config_handler->language_key) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 	memory_system_free(config_handler->game_dir, (strlen(config_handler->game_dir) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 
-	memory_system_free(config_handler, sizeof(ConfigHandler), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(config_handler, sizeof(ConfigHandler), HM_MEMORY_GROUP_CONFIG_HANDLER);
 }

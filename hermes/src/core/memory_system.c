@@ -79,7 +79,7 @@ void* memory_system_realloc(void* ptr, u64 new_size, u64 current_size, MemoryGro
 		return realloc(ptr, new_size);
 	}
 
-	HM_WARN("[MemorySystem]: Ignored reallocation: new_size and current_size were equal!");
+	HM_WARN("[MemorySystem]: Ignored reallocation: Size did not change!");
 
 	return ptr;
 }
@@ -91,9 +91,37 @@ void memory_system_free(void* ptr, u64 size, MemoryGroup group)
 	free(ptr);
 }
 
+const char* memory_group_to_str(MemoryGroup memory_group)
+{
+	HM_ASSERT(memory_group < HM_MEMORY_GROUP_SIZE);
+
+	switch (memory_group)
+	{
+		case HM_MEMORY_GROUP_UNKNOWN: return "Unknown";
+		case HM_MEMORY_GROUP_STRING: return "String";
+		case HM_MEMORY_GROUP_APPLICATION: return "Application";
+		case HM_MEMORY_GROUP_PLATFORM: return "Platform";
+		case HM_MEMORY_GROUP_SERIALIZABLE_DATA: return "Serializable Data";
+		case HM_MEMORY_GROUP_CONFIG_HANDLER: return "Config Handler";
+		case HM_MEMORY_GROUP_LOCALE: return "Locale";
+		case HM_MEMORY_GROUP_LOCALE_HANDLER: return "Locale Handler";
+		case HM_MEMORY_GROUP_LOCATION_PATH: return "Location Path";
+		case HM_MEMORY_GROUP_LOCATION: return "Location";
+		case HM_MEMORY_GROUP_LOCATION_HANDLER: return "Location Handler";
+
+		default:
+			break;
+	}
+
+	HM_ASSERT(HM_FALSE);
+
+	return "Unknown";
+}
+
 void memory_system_log(void)
 {
 	HM_INFO("[MemorySystem]: Total allocated: %zu", memory_system.total_allocated);
-	HM_INFO("[MemorySystem]: MemoryGroup \"Unknown\": %zu", memory_system.groups_allocated[HM_MEMORY_GROUP_UNKNOWN]);
-	HM_INFO("[MemorySystem]: MemoryGroup \"String\": %zu", memory_system.groups_allocated[HM_MEMORY_GROUP_STRING]);
+
+	for(MemoryGroup memory_group = HM_MEMORY_GROUP_UNKNOWN; memory_group < HM_MEMORY_GROUP_SIZE; ++memory_group)
+		HM_INFO("[MemorySystem]: MemoryGroup \"%s\": %zu", memory_group_to_str(memory_group), memory_system.groups_allocated[memory_group]);
 }
