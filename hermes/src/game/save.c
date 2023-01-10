@@ -8,7 +8,7 @@
 
 Savefile* savefile_create(const char* path)
 {
-	Savefile* savefile = memory_system_malloc(sizeof(Savefile), HM_MEMORY_GROUP_UNKNOWN);
+	Savefile* savefile = memory_system_malloc(sizeof(Savefile), HM_MEMORY_GROUP_SAVEFILE);
 	savefile->path = memory_system_malloc((strlen(path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 	strcpy(savefile->path, path);
 
@@ -39,5 +39,5 @@ void savefile_shutdown(Savefile* savefile)
 {
 	memory_system_free(savefile->path, (strlen(savefile->path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 
-	memory_system_free(savefile, sizeof(Savefile), HM_MEMORY_GROUP_UNKNOWN);
+	memory_system_free(savefile, sizeof(Savefile), HM_MEMORY_GROUP_SAVEFILE);
 }

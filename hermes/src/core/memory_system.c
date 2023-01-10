@@ -103,6 +103,7 @@ const char* memory_group_to_str(MemoryGroup memory_group)
 		case HM_MEMORY_GROUP_PLATFORM: return "Platform";
 		case HM_MEMORY_GROUP_SERIALIZABLE_DATA: return "Serializable Data";
 		case HM_MEMORY_GROUP_CONFIG_HANDLER: return "Config Handler";
+		case HM_MEMORY_GROUP_SAVEFILE: return "Savefile";
 		case HM_MEMORY_GROUP_LOCALE: return "Locale";
 		case HM_MEMORY_GROUP_LOCALE_HANDLER: return "Locale Handler";
 		case HM_MEMORY_GROUP_LOCATION_PATH: return "Location Path";
