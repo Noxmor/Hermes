@@ -188,7 +188,7 @@ b8 save_to_file(SerializableData* data, u64 whitespace_count, FILE* f)
 	if (fwrite(" ", sizeof(char), whitespace_count, f) != whitespace_count)
 		return HM_FALSE;
 
-	if (data->children_count == 0)
+	if (data->children_count == 0 && data->value != NULL)
 	{
 		if (fwrite(data->key, sizeof(char), strlen(data->key), f) != strlen(data->key))
 			return HM_FALSE;
