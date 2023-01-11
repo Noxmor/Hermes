@@ -187,6 +187,13 @@ void platform_draw_text(u64 x, u64 y, const char* text)
 			continue;
 		}
 
+		if (c == '\\' && text[i + 1] == 'n')
+		{
+			++i;
+			start_index = (y + 1) * platform.screen_width + 0;
+			continue;
+		}
+
 		const DWORD element = (u8)c | (color << 16);
 		platform.next_screen[start_index++] = element;
 	}
