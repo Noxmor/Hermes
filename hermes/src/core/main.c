@@ -2,6 +2,7 @@
 
 #include "core/memory_system.h"
 #include "core/application.h"
+
 #include "platform/platform.h"
 
 int main(void)
@@ -19,6 +20,8 @@ int main(void)
 
 	HM_INFO("Running application...");
 	application_run(app);
+
+	application_shutdown(app);
 	HM_INFO("Shut down application!");
 
 	platform_shutdown();
