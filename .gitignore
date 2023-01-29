@@ -2,9 +2,6 @@
 **/bin/
 **bin-int/
 
-# Base game
-**/base/
-
 #Hermes files
 Hermes.exe
 error.log
