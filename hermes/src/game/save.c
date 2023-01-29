@@ -19,6 +19,7 @@ Savefile* savefile_create_from_file(const char* path)
 {
 	Savefile* savefile = savefile_create(path);
 
+	//TODO: Implement
 	HM_ASSERT(HM_FALSE);
 
 	return savefile;
@@ -27,6 +28,8 @@ Savefile* savefile_create_from_file(const char* path)
 b8 savefile_save(Savefile* savefile)
 {
 	SerializableData* savefile_data = serializable_data_create("save", NULL);
+
+	serializable_data_add_child(savefile_data, serializable_data_create("location", savefile->current_location->name_id));
 
 	const b8 success = serializable_data_save_to_file(savefile_data, savefile->path);
 

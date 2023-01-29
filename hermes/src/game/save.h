@@ -3,9 +3,12 @@
 
 #include "core/core.h"
 
+#include "game/location.h"
+
 typedef struct Savefile
 {
 	char* path;
+	Location* current_location;
 
 } Savefile;
 
