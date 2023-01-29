@@ -140,6 +140,21 @@ void location_handler_load_locations(LocationHandler* location_handler, const ch
 	memory_system_free(path, (strlen(path) + 1) * sizeof(char), HM_MEMORY_GROUP_STRING);
 }
 
+Location* location_handler_get_location_by_name_id(LocationHandler* location_handler, const char* name_id)
+{
+	for(u64 i = 0; i < location_handler->location_count; ++i)
+	{
+		Location* loc = &location_handler->locations[i];
+		
+		if(strcmp(loc->name_id, name_id) == 0)
+			return loc;
+	}
+
+	HM_WARN("[LocationHandler]: Found no location with name id \"%s\"!", name_id);
+
+	return NULL;
+}
+
 void location_handler_shutdown(LocationHandler* location_handler)
 {
 	for (u64 i = 0; i < location_handler->location_count; ++i)

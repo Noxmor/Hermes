@@ -27,6 +27,8 @@ LocationHandler* location_handler_create(void);
 
 void location_handler_load_locations(LocationHandler* location_handler, const char* game_dir);
 
+Location* location_handler_get_location_by_name_id(LocationHandler* location_handler, const char* name_id);
+
 void location_handler_shutdown(LocationHandler* location_handler);
 
 #endif
