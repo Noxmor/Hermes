@@ -11,6 +11,10 @@ typedef struct Interface
 	u8 current_command_index;
 } Interface;
 
-void interface_render_commands(Interface* inf, LocaleHandler* locale_handler);
+void interface_render_commands(Interface* inf, u64 x, u64 y, LocaleHandler* locale_handler);
+
+void interface_move_up(Interface* inf);
+
+void interface_move_down(Interface* inf);
 
 #endif
