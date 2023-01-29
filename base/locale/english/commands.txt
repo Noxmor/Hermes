@@ -1,0 +1,16 @@
+english:
+ CMD_YES=Yes
+ CMD_NO=No
+ CMD_QUIT=Quit
+ CMD_BACK=Back
+ CMD_PLAY=Play
+ CMD_NEW_GAME=New Game
+ CMD_LOAD_GAME=Load game
+ CMD_TRAVEL=Travel
+ CMD_SEARCH=Search
+ CMD_TALK=Talk
+ CMD_OPEN_INVENTORY=Open Inventory
+ CMD_QUESTS=Quests
+ CMD_OPTIONS=Options
+ CMD_LANGUAGE=Language
+ CMD_CONTROLS=Controls

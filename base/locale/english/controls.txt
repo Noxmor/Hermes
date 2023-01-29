@@ -1,0 +1,4 @@
+english:
+ KEYBIND_CONFIRM=Confirm
+ KEYBIND_MOVE_UP=Move up
+ KEYBIND_MOVE_DOWN=Move Down

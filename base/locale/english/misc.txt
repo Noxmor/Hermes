@@ -1,0 +1,4 @@
+english:
+ MISC_NEW_SAVEFILE=Please enter a name for the new save file:
+ MISC_OVERWRITE_SAVEFILE_POPUP=This savefile does already exist.\nDo you want to overwrite it?
+ MISC_SET_KEYBIND=Setting keybind: 

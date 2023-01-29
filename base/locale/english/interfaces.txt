@@ -1,0 +1,8 @@
+english:
+ INF_MAIN_MENU=This is the main menu of Hermes.
+ INF_PLAY_MENU=Play Menu
+ INF_LOCATION_MENU=Location Menu
+ INF_TRAVEL_MENU=Travel Menu
+ INF_OPTIONS_MENU=Options Menu
+ INF_LANGUAGE_MENU=Language Menu
+ INF_CONTROLS_MENU=Controls Menu
