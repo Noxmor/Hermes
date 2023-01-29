@@ -3,6 +3,7 @@
 **bin-int/
 
 #Hermes files
+**/saves/
 Hermes.exe
 error.log
 Hermes.log
