@@ -38,4 +38,4 @@ gcc %OBJ_FILES% -o bin/%assembly%.exe %INCLUDES% %DEFINES% %LINKS%
 
 if %ERRORLEVEL% NEQ 0 (exit /b) else (echo Successfully built %assembly%^^!)
 
-COPY bin\%assembly%.exe %assembly%.exe
+COPY bin\%assembly%.exe %assembly%.exe 1>NUL
