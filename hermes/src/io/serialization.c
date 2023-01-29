@@ -128,7 +128,8 @@ SerializableData* serializable_data_create_from_file(const char* path)
 		if(buffer[strlen(buffer) - 1] == '\n')
 			buffer[strlen(buffer) - 1] = '\0';
 
-		if(buffer[strlen(buffer) - 1] == ':')
+		const b8 line_contains_delimiter = strchr(buffer, '=') != NULL;
+		if(!line_contains_delimiter)
 		{
 			buffer[strlen(buffer) - 1] = '\0';
 
