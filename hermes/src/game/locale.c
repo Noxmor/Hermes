@@ -243,8 +243,8 @@ void locale_handler_load_locales(LocaleHandler* locale_handler, const char* game
 {
 	char path[256];
 
-#define FILES_TO_LOAD_COUNT 4
-	static const char* files_to_load[FILES_TO_LOAD_COUNT] = { "commands", "interfaces", "controls", "locations" };
+#define FILES_TO_LOAD_COUNT 5
+	static const char* files_to_load[FILES_TO_LOAD_COUNT] = { "commands", "interfaces", "controls", "locations", "misc" };
 
 	for (u64 i = 0; i < FILES_TO_LOAD_COUNT; ++i)
 	{
