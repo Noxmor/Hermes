@@ -3,8 +3,13 @@ SetLocal EnableDelayedExpansion
 
 cd ../
 
-if not exist bin mkdir bin
-if not exist bin-int mkdir bin-int
+if exist bin @RD /S /Q bin
+if exist bin-int @RD /S /Q bin-int
+
+if exist Hermes.exe DEL Hermes.exe
+
+mkdir bin
+mkdir bin-int
 
 SET FILES= 
 for /R %%f in (*.c) do (
@@ -32,3 +37,5 @@ POPD
 gcc %OBJ_FILES% -o bin/%assembly%.exe %INCLUDES% %DEFINES% %LINKS%
 
 if %ERRORLEVEL% NEQ 0 (exit /b) else (echo Successfully built %assembly%^^!)
+
+COPY bin\%assembly%.exe %assembly%.exe
