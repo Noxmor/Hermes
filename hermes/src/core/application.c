@@ -62,6 +62,7 @@ static void update_play_menu(Application* app)
 static void update_location_menu(Application* app)
 {
 	platform_draw_text(0, 0, locale_handler_get(app->locale_handler, "INF_LOCATION_MENU"));
+	platform_draw_text(0, 1, locale_handler_get(app->locale_handler, app->savefile->current_location->name_id));
 
 	interface_render_commands(&app->location_menu, 0, 0, app->locale_handler);
 
@@ -85,13 +86,25 @@ static void update_location_menu(Application* app)
 		interface_move_down(&app->location_menu);
 }
 
+static void update_travel_menu_commands(Interface* inf, Savefile* savefile)
+{
+	inf->current_command_index = 0;
+	inf->commands = memory_system_realloc(inf->commands, sizeof(Command) * (savefile->current_location->path_count + 1), sizeof(Command) * inf->command_count, HM_MEMORY_GROUP_UNKNOWN);
+	inf->command_count = savefile->current_location->path_count + 1;
+
+	for(u8 i = 0; i < inf->command_count - 1; ++i)
+	{
+		inf->commands[i].name_id = savefile->current_location->paths[i].name_id;
+		inf->commands[i].type = HM_COMMAND_TYPE_TRAVEL_BIT | HM_COMMAND_TYPE_POP_GAMESTATE_BIT;
+	}
+
+	inf->commands[inf->command_count - 1].type = HM_COMMAND_TYPE_POP_GAMESTATE_BIT;
+	inf->commands[inf->command_count - 1].name_id = "CMD_BACK";
+}
+
 static void update_travel_menu(Application* app)
 {
-platform_draw_text(0, 0, locale_handler_get(app->locale_handler, "INF_TRAVEL_MENU"));
-				
-	//TODO: Do the recalculations for the travel menu only after a travel command is executed and once on application startup!
-	//TODO: Add the following code when recalculation happens only once, otherwise the index will each frame be resetted to 0: travel_menu.current_command_index = 0;
-
+	platform_draw_text(0, 0, locale_handler_get(app->locale_handler, "INF_TRAVEL_MENU"));
 	interface_render_commands(&app->travel_menu, 0, 0, app->locale_handler);
 				
 	platform_flush();
@@ -438,8 +451,10 @@ void application_run(Application* app)
 
 				app->savefile = savefile_create(path);
 				//TODO: Remove hard coded location id
-				//Load a "new.txt" file which contains all starting info for a new savefile.
+				//TODO: Load a "new.txt" file which contains all starting info for a new savefile.
 				app->savefile->current_location = location_handler_get_location_by_name_id(app->location_handler, "LOC_START");
+
+				update_travel_menu_commands(&app->travel_menu, app->savefile);
 
 				++current_state;
 				*current_state = HM_GAMESTATE_LOCATION_MENU;
@@ -470,23 +485,13 @@ void application_run(Application* app)
 			
 			++current_state;
 			*current_state = HM_GAMESTATE_TRAVEL_MENU;
-
-			app->travel_menu.current_command_index = 0;
-			app->travel_menu.commands = memory_system_realloc(app->travel_menu.commands, sizeof(Command) * (app->savefile->current_location->path_count + 1), sizeof(Command) * app->travel_menu.command_count, HM_MEMORY_GROUP_UNKNOWN);
-			app->travel_menu.command_count = app->savefile->current_location->path_count + 1;
-
-			for(u8 i = 0; i < app->travel_menu.command_count - 1; ++i)
-			{
-				app->travel_menu.commands[i].name_id = app->savefile->current_location->paths[i].name_id;
-				app->travel_menu.commands[i].type = HM_COMMAND_TYPE_TRAVEL_BIT | HM_COMMAND_TYPE_POP_GAMESTATE_BIT;
-			}
-
-			app->travel_menu.commands[app->travel_menu.command_count - 1].name_id = "CMD_BACK";
-			app->travel_menu.commands[app->travel_menu.command_count - 1].type = HM_COMMAND_TYPE_POP_GAMESTATE_BIT;
 		}
 
 		if(app->current_command_type & HM_COMMAND_TYPE_TRAVEL_BIT)
+		{
 			app->savefile->current_location = location_handler_get_location_by_name_id(app->location_handler, app->travel_menu.commands[app->travel_menu.current_command_index].name_id);
+			update_travel_menu_commands(&app->travel_menu, app->savefile);
+		}
 
 		if(app->current_command_type & HM_COMMAND_TYPE_PUSH_GAMESTATE_OPTIONS_BIT)
 		{
