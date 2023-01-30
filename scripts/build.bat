@@ -1,12 +1,14 @@
 @echo off
 SetLocal EnableDelayedExpansion
 
+SET assembly=Hermes
+
 cd ../
 
 if exist bin @RD /S /Q bin
 if exist bin-int @RD /S /Q bin-int
 
-if exist Hermes.exe DEL Hermes.exe
+if exist %assembly%.exe DEL %assembly%.exe
 
 mkdir bin
 mkdir bin-int
@@ -20,7 +22,6 @@ SET FLAGS=-Wall -Wextra -O3
 SET INCLUDES=-I../hermes/src
 SET DEFINES=-DHM_ENABLE_ASSERTS
 
-SET assembly=Hermes
 echo Building %assembly%...
 
 PUSHD bin-int
